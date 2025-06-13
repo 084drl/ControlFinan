@@ -12,28 +12,35 @@ const sendResponse = (statusCode, body) => new Response(JSON.stringify(body), { 
 export default async (req) => {
     if (req.method !== 'POST') return sendResponse(405, { message: 'Método não permitido.' });
 
+    // 'auth-data' é o nome do nosso "banco de dados" de usuários
     const store = getStore('auth-data');
     const { action, username, password, secret, newPassword } = await req.json();
+
     if (!username) return sendResponse(400, { message: 'Nome de usuário é obrigatório.' });
 
     try {
         let userData = await store.get(username, { type: 'json' });
 
-        // Se o usuário não existir, cria um com dados padrão na primeira vez
-        if (!userData && action === 'login') {
-            const salt = randomBytes(16).toString('hex');
-            const defaultPasswordHash = hashPassword('admin123', salt);
-            const secretSalt = randomBytes(16).toString('hex');
-            const secretHash = hashPassword('azul', secretSalt); // Resposta secreta padrão
+        // --- LÓGICA DE CRIAÇÃO DO USUÁRIO CORRIGIDA ---
+        // Se o usuário não existe, cria um com dados padrão, não importa a ação.
+        // Isso garante que na primeira tentativa de login ou recuperação, o usuário 'admin' seja criado.
+        if (!userData) {
+            if (username === 'admin') {
+                const salt = randomBytes(16).toString('hex');
+                const defaultPasswordHash = hashPassword('admin123', salt);
+                const secretSalt = randomBytes(16).toString('hex');
+                const secretHash = hashPassword('azul', secretSalt); // Resposta secreta padrão
 
-            userData = {
-                salt, passwordHash: defaultPasswordHash,
-                secretQuestion: 'Qual sua cor favorita?',
-                secretSalt, secretHash
-            };
-            await store.setJSON(username, userData);
-        } else if (!userData) {
-            return sendResponse(404, { success: false, message: 'Usuário não encontrado.' });
+                userData = {
+                    salt, passwordHash: defaultPasswordHash,
+                    secretQuestion: 'Qual sua cor favorita?',
+                    secretSalt, secretHash
+                };
+                await store.setJSON(username, userData);
+            } else {
+                // Se o usuário não for 'admin' e não existir, retorna erro.
+                return sendResponse(404, { success: false, message: 'Usuário não encontrado.' });
+            }
         }
 
         switch (action) {
@@ -62,7 +69,9 @@ export default async (req) => {
                 }
                 const newSalt = randomBytes(16).toString('hex');
                 const newPasswordHash = hashPassword(newPassword, newSalt);
-                await store.setJSON(username, { ...userData, salt: newSalt, passwordHash: newPasswordHash, resetToken: null, tokenExpiry: null });
+                // Remove os campos de reset após o uso
+                const { resetToken: _, tokenExpiry: __, ...restOfUserData } = userData;
+                await store.setJSON(username, { ...restOfUserData, salt: newSalt, passwordHash: newPasswordHash });
                 return sendResponse(200, { success: true, message: 'Senha alterada com sucesso!' });
 
             default:
