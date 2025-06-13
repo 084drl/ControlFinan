@@ -1,22 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Estado da aplicação para esta página
     let appData = { categorias: [], orcamentos: [] };
 
     const formCategoria = document.getElementById('form-categoria');
     const formOrcamento = document.getElementById('form-orcamento');
     const mainContent = document.querySelector('main');
 
-    // --- FUNÇÕES DE API ---
     const salvarDados = async () => {
         try {
             document.body.style.cursor = 'wait';
-            await fetch('/.netlify/functions/transacoes', {
-                method: 'POST',
-                body: JSON.stringify(appData),
-            });
+            await fetch('/.netlify/functions/transacoes', { method: 'POST', body: JSON.stringify(appData) });
         } catch (error) {
             console.error('Erro ao salvar:', error);
-            alert('Falha ao salvar as alterações.');
+            alert("Não foi possível salvar as alterações.");
         } finally {
             document.body.style.cursor = 'default';
         }
@@ -29,29 +24,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             
             appData = {
-                // Pega os dados do backend ou usa arrays vazios como padrão
                 categorias: data.categorias || [],
                 orcamentos: data.orcamentos || [],
-                // Mantém os outros dados intactos para não sobrescrevê-los
                 transacoes: data.transacoes || [],
                 comprasParceladas: data.comprasParceladas || []
             };
-
-            if (formCategoria) renderizarPaginaCategorias();
-            if (formOrcamento) renderizarPaginaOrcamentos();
         } catch (error) {
             console.error("Erro ao carregar dados:", error);
             mainContent.innerHTML = `<div class="card"><p class="error-text" style="display:block;">Erro ao carregar dados.</p></div>`;
+            return false;
         }
+        return true;
     };
 
-    // --- LÓGICA DA PÁGINA DE CATEGORIAS ---
     const renderizarPaginaCategorias = () => {
         const nomeCategoriaInput = document.getElementById('categoria-nome');
         const listaDespesasEl = document.getElementById('lista-despesas');
         const listaReceitasEl = document.getElementById('lista-receitas');
 
-        function renderizarListas() {
+        const renderizarListas = () => {
             listaDespesasEl.innerHTML = '';
             listaReceitasEl.innerHTML = '';
             
@@ -89,10 +80,65 @@ document.addEventListener('DOMContentLoaded', () => {
         renderizarListas();
     };
 
-    // --- LÓGICA DA PÁGINA DE ORÇAMENTOS ---
     const renderizarPaginaOrcamentos = () => {
-        // (A lógica interna desta página já estava boa, apenas adaptada para usar appData)
-    };
+        const categoriaSelect = document.getElementById('orcamento-categoria-select');
+        const valorInput = document.getElementById('orcamento-valor');
+        const listaOrcamentosEl = document.getElementById('lista-orcamentos');
 
-    carregarDados();
+        const carregarCategoriasDeDespesa = () => {
+            categoriaSelect.innerHTML = '<option value="" disabled selected>Selecione...</option>';
+            appData.categorias.filter(c => c.tipo === 'despesa').forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat.id;
+                option.textContent = cat.nome;
+                categoriaSelect.appendChild(option);
+            });
+        };
+
+        const renderizarOrcamentos = () => {
+            listaOrcamentosEl.innerHTML = appData.orcamentos.length === 0 ? '<p class="placeholder-text">Nenhum orçamento definido.</p>' : '';
+            appData.orcamentos.forEach(orc => {
+                const categoria = appData.categorias.find(c => c.id === orc.categoriaId);
+                if (categoria) {
+                    const item = document.createElement('div');
+                    item.className = 'orcamento-list-item';
+                    item.innerHTML = `<span><strong>${categoria.nome}:</strong> ${orc.limite.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span> <button class="delete-btn" data-id="${orc.categoriaId}">✖</button>`;
+                    listaOrcamentosEl.appendChild(item);
+                }
+            });
+        };
+
+        formOrcamento.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const categoriaId = parseInt(categoriaSelect.value);
+            const limite = parseFloat(valorInput.value);
+            if (categoriaId && limite > 0) {
+                appData.orcamentos = appData.orcamentos.filter(o => o.categoriaId !== categoriaId);
+                appData.orcamentos.push({ categoriaId, limite });
+                await salvarDados();
+                renderizarOrcamentos();
+                formOrcamento.reset();
+            }
+        });
+
+        listaOrcamentosEl.addEventListener('click', async (e) => {
+            if (e.target.classList.contains('delete-btn')) {
+                const id = parseInt(e.target.dataset.id);
+                appData.orcamentos = appData.orcamentos.filter(o => o.categoriaId !== id);
+                await salvarDados();
+                renderizarOrcamentos();
+            }
+        });
+
+        carregarCategoriasDeDespesa();
+        renderizarOrcamentos();
+    };
+    
+    // Ponto de entrada
+    (async () => {
+        if (await carregarDados()) {
+            if (formCategoria) renderizarPaginaCategorias();
+            if (formOrcamento) renderizarPaginaOrcamentos();
+        }
+    })();
 });

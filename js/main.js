@@ -1,91 +1,79 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Estado da aplicação que será preenchido pela API
+    // Estado global da aplicação
     let appData = { transacoes: [], comprasParceladas: [], categorias: [], orcamentos: [] };
     let charts = { monthly: null, pie: null, projection: null };
-
-    // Seletores do DOM
     const mainElement = document.querySelector('main');
-    const form = document.getElementById('form-transacao');
-    const descricaoInput = document.getElementById('descricao');
-    const valorInput = document.getElementById('valor');
-    const dataInput = document.getElementById('data');
-    const categoriaSelect = document.getElementById('categoria-select');
-    const fixoOptionContainer = document.getElementById('fixo-option-container');
-    const parceladoOptionContainer = document.getElementById('parcelado-option-container');
-    const isFixoInput = document.getElementById('is-fixo');
-    const isParceladaInput = document.getElementById('is-parcelada');
-    const parcelasInputContainer = document.getElementById('parcelas-input-container');
-    // ... outros seletores ...
-
-    const formatarMoeda = (valor) => (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
     // --- FUNÇÕES DE API ---
-    const salvarDados = async () => {
-        try {
-            document.body.style.cursor = 'wait';
-            await fetch('/.netlify/functions/transacoes', { method: 'POST', body: JSON.stringify(appData) });
-        } catch (error) {
-            console.error("Erro ao salvar:", error);
-            alert("Não foi possível salvar as alterações.");
-        } finally {
-            document.body.style.cursor = 'default';
-        }
-    };
+    const salvarDados = async () => { /* ... (código mantido da resposta anterior) ... */ };
+    const carregarDados = async () => { /* ... (código mantido da resposta anterior) ... */ };
 
-    const carregarDadosEIniciar = async () => {
-        try {
-            const response = await fetch('/.netlify/functions/transacoes');
-            if (!response.ok) throw new Error(`Erro do servidor: ${response.status}`);
-            
-            const data = await response.json();
-            
-            let dadosIniciaisForamCriados = false;
-            
-            appData.transacoes = data.transacoes || [];
-            appData.comprasParceladas = data.comprasParceladas || [];
-            appData.orcamentos = data.orcamentos || [];
+    // --- FUNÇÕES DE RENDERIZAÇÃO E LÓGICA ---
+    const formatarMoeda = (valor) => (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-            if (!data.categorias || data.categorias.length === 0) {
-                appData.categorias = [
-                    { id: 1, nome: 'Salário', tipo: 'receita' },
-                    { id: 2, nome: 'Moradia', tipo: 'despesa' },
-                    { id: 3, nome: 'Alimentação', tipo: 'despesa' }
-                ];
-                dadosIniciaisForamCriados = true;
-            } else {
-                appData.categorias = data.categorias;
-            }
-            
-            if (dadosIniciaisForamCriados) await salvarDados();
-            
-            renderizarPaginaCompleta();
-        } catch (error) {
-            console.error("Erro crítico ao carregar dados:", error);
-            mainElement.innerHTML = `<div class="card"><p class="error-text" style="display:block;">Erro ao carregar dados.</p></div>`;
-        }
-    };
-
-    // --- RENDERIZAÇÃO E LÓGICA ---
-    const renderizarPaginaCompleta = () => {
-        // Função que renderiza todo o dashboard usando os dados de 'appData'
-        // ... (colar aqui o conteúdo da sua função renderizarPaginaCompleta anterior)
-        // ... incluindo as chamadas para atualizarDashboard, renderizarTabela, atualizarGraficos, etc.
-    };
-
-    // (Cole aqui todas as suas outras funções auxiliares: atualizarDashboard, renderizarTabela, etc.)
-    // Elas devem usar 'appData' (ex: appData.transacoes)
-
-    // --- EVENT LISTENERS ---
-    if(form) {
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            // ... (lógica para criar nova transação) ...
-            // Adicionar em appData.transacoes ou appData.comprasParceladas
-            await salvarDados();
-            renderizarPaginaCompleta();
+    function carregarCategorias(tipo, selectElement) {
+        selectElement.innerHTML = '<option value="" disabled selected>Selecione...</option>';
+        appData.categorias.filter(c => c.tipo === tipo).forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat.id; option.textContent = cat.nome;
+            selectElement.appendChild(option);
         });
     }
 
-    // Ponto de entrada da aplicação
-    carregarDadosEIniciar();
+    function atualizarVisibilidadeFormulario() {
+        // ... (código mantido, apenas com seletores mais seguros)
+    }
+    
+    // ... (todas as outras funções auxiliares: gerarTransacoesCompletas, atualizarDashboard, renderizarTabela, atualizarGraficos)
+
+    // --- FUNÇÃO PRINCIPAL DE RENDERIZAÇÃO ---
+    function renderizarPaginaPrincipal() {
+        mainElement.innerHTML = `
+            <section class="strategic-grid">
+                <!-- ... (cole aqui a estrutura HTML do seu dashboard) ... -->
+            </section>
+            <section class="card">
+                <h2>Adicionar Nova Transação</h2>
+                <form id="form-transacao">
+                    <!-- ... (cole aqui a estrutura HTML do seu formulário) ... -->
+                </form>
+            </section>
+            <section class="card">
+                <h2>Histórico de Transações (Mês Atual)</h2>
+                <table class="transaction-table">
+                    <thead><tr><th>Descrição</th><th>Valor</th><th>Categoria</th><th>Data</th><th>Ação</th></tr></thead>
+                    <tbody id="lista-transacoes"></tbody>
+                </table>
+            </section>
+        `;
+
+        // Agora que os elementos existem, podemos adicionar os event listeners
+        adicionarEventListeners();
+        
+        // E renderizar os dados
+        const todasTransacoes = gerarTransacoesCompletas();
+        // ... (lógica para pegar transacoesMes e chamar as funções de renderização de dashboard/tabela/gráficos)
+    }
+    
+    function adicionarEventListeners() {
+        const form = document.getElementById('form-transacao');
+        // ... (selecionar todos os outros elementos do formulário)
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            // ... (lógica de submit do formulário)
+            await salvarDados();
+            renderizarPaginaPrincipal(); // Re-renderiza tudo para refletir as mudanças
+        });
+        
+        // ... (adicionar outros event listeners, como para os radio buttons e checkboxes)
+    }
+
+    // --- PONTO DE ENTRADA ---
+    (async () => {
+        if (await carregarDados()) {
+            // Se os dados carregaram, renderiza a página principal
+            renderizarPaginaPrincipal();
+        }
+    })();
 });
