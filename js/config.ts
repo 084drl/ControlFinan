@@ -1,18 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
     // === ESTADO DA APLICAÇÃO ===
-    let categorias = JSON.parse(localStorage.getItem('categorias_v4')) || [
+    // Usando uma nova versão para garantir que não haja conflito com dados antigos
+    let categorias = JSON.parse(localStorage.getItem('categorias_v5')) || [
         { id: 1, nome: 'Salário', tipo: 'receita' },
         { id: 2, nome: 'Moradia', tipo: 'despesa' },
         { id: 3, nome: 'Alimentação', tipo: 'despesa' },
     ];
-    let orcamentos = JSON.parse(localStorage.getItem('orcamentos_v4')) || [];
+    let orcamentos = JSON.parse(localStorage.getItem('orcamentos_v5')) || [];
 
     const formCategoria = document.getElementById('form-categoria');
     const formOrcamento = document.getElementById('form-orcamento');
 
     const salvarDados = () => {
-        localStorage.setItem('categorias_v4', JSON.stringify(categorias));
-        localStorage.setItem('orcamentos_v4', JSON.stringify(orcamentos));
+        localStorage.setItem('categorias_v5', JSON.stringify(categorias));
+        localStorage.setItem('orcamentos_v5', JSON.stringify(orcamentos));
     };
 
     // === LÓGICA DE CATEGORIAS (categorias.html) ===
@@ -26,18 +27,26 @@ document.addEventListener('DOMContentLoaded', () => {
             listaDespesasEl.innerHTML = '';
             listaReceitasEl.innerHTML = '';
             
-            if (categorias.length === 0) {
-                 listaDespesasEl.innerHTML = '<li>Nenhuma categoria de despesa.</li>';
-                 listaReceitasEl.innerHTML = '<li>Nenhuma categoria de receita.</li>';
+            const categoriasDespesa = categorias.filter(c => c.tipo === 'despesa');
+            const categoriasReceita = categorias.filter(c => c.tipo === 'receita');
+
+            if (categoriasDespesa.length === 0) {
+                 listaDespesasEl.innerHTML = '<li class="placeholder-text">Nenhuma categoria de despesa.</li>';
             } else {
-                categorias.forEach(cat => {
+                categoriasDespesa.forEach(cat => {
                     const li = document.createElement('li');
                     li.innerHTML = `<span>${cat.nome}</span> <button class="delete-btn" data-id="${cat.id}">✖</button>`;
-                    if (cat.tipo === 'despesa') {
-                        listaDespesasEl.appendChild(li);
-                    } else {
-                        listaReceitasEl.appendChild(li);
-                    }
+                    listaDespesasEl.appendChild(li);
+                });
+            }
+
+            if (categoriasReceita.length === 0) {
+                 listaReceitasEl.innerHTML = '<li class="placeholder-text">Nenhuma categoria de receita.</li>';
+            } else {
+                categoriasReceita.forEach(cat => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span>${cat.nome}</span> <button class="delete-btn" data-id="${cat.id}">✖</button>`;
+                    listaReceitasEl.appendChild(li);
                 });
             }
         };
@@ -57,10 +66,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.body.addEventListener('click', (e) => {
-            if (e.target.classList.contains('delete-btn') && e.target.closest('#lista-despesas, #lista-receitas')) {
+            if (e.target.classList.contains('delete-btn') && e.target.closest('.category-list')) {
                 const id = parseInt(e.target.getAttribute('data-id'));
                 categorias = categorias.filter(cat => cat.id !== id);
-                orcamentos = orcamentos.filter(orc => orc.categoriaId !== id); // Remove orçamentos associados
+                orcamentos = orcamentos.filter(orc => orc.categoriaId !== id);
                 salvarDados();
                 renderizarCategorias();
             }
@@ -110,7 +119,6 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const categoriaId = parseInt(categoriaSelect.value);
             const limite = parseFloat(valorInput.value);
-
             if (categoriaId && limite > 0) {
                 orcamentos = orcamentos.filter(o => o.categoriaId !== categoriaId);
                 orcamentos.push({ categoriaId, limite });

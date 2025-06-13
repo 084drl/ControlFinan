@@ -1,9 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
     // === ESTADO DA APLICAÇÃO ===
-    let transacoes = JSON.parse(localStorage.getItem('transacoes_v4')) || [];
-    let comprasParceladas = JSON.parse(localStorage.getItem('comprasParceladas_v4')) || [];
-    let categorias = JSON.parse(localStorage.getItem('categorias_v4')) || [];
-    let orcamentos = JSON.parse(localStorage.getItem('orcamentos_v4')) || [];
+    // Usando uma nova versão para garantir que não haja conflito com dados antigos
+    let transacoes = JSON.parse(localStorage.getItem('transacoes_v5')) || [];
+    let comprasParceladas = JSON.parse(localStorage.getItem('comprasParceladas_v5')) || [];
+    let categorias = JSON.parse(localStorage.getItem('categorias_v5')) || [];
+    let orcamentos = JSON.parse(localStorage.getItem('orcamentos_v5')) || [];
     let monthlyChart, pieChart;
 
     // === SELETORES DO DOM ===
@@ -12,7 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const valorInput = document.getElementById('valor');
     const dataInput = document.getElementById('data');
     const categoriaSelect = document.getElementById('categoria-select');
-    // Seletores para Fixo e Parcelado
     const extraOptionsContainer = document.getElementById('extra-options-container');
     const isFixoInput = document.getElementById('is-fixo');
     const isParceladaInput = document.getElementById('is-parcelada');
@@ -27,8 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // === FUNÇÕES AUXILIARES ===
     const formatarMoeda = (valor) => valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     const salvarDados = () => {
-        localStorage.setItem('transacoes_v4', JSON.stringify(transacoes));
-        localStorage.setItem('comprasParceladas_v4', JSON.stringify(comprasParceladas));
+        localStorage.setItem('transacoes_v5', JSON.stringify(transacoes));
+        localStorage.setItem('comprasParceladas_v5', JSON.stringify(comprasParceladas));
     };
 
     // === LÓGICA DE INTERFACE E FORMULÁRIO ===
@@ -49,13 +49,17 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (tipoSelecionado === 'despesa') {
             extraOptionsContainer.style.display = 'block';
-            isFixoInput.disabled = isParceladaInput.checked;
-            isParceladaInput.disabled = isFixoInput.checked;
-            parcelasInputContainer.style.display = isParceladaInput.checked ? 'block' : 'none';
         } else {
             extraOptionsContainer.style.display = 'none';
+            isFixoInput.checked = false;
+            isParceladaInput.checked = false;
         }
+        
+        isFixoInput.disabled = isParceladaInput.checked;
+        isParceladaInput.disabled = isFixoInput.checked;
+        parcelasInputContainer.style.display = isParceladaInput.checked ? 'block' : 'none';
     };
+    
     document.querySelectorAll('input[name="tipo"]').forEach(radio => radio.addEventListener('change', atualizarVisibilidadeFormulario));
     isParceladaInput.addEventListener('change', atualizarVisibilidadeFormulario);
     isFixoInput.addEventListener('change', atualizarVisibilidadeFormulario);
@@ -100,18 +104,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const percentual = (gasto / orc.limite) * 100;
             const categoria = categorias.find(c => c.id === orc.categoriaId);
 
-            const item = document.createElement('div');
-            item.className = 'budget-item';
-            item.innerHTML = `
-                <div class="info">
-                    <span>${categoria.nome}</span>
-                    <span>${formatarMoeda(gasto)} / ${formatarMoeda(orc.limite)}</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-bar-inner ${percentual > 100 ? 'over-budget' : ''}" style="width: ${Math.min(percentual, 100)}%;"></div>
-                </div>
-            `;
-            budgetSummaryContainer.appendChild(item);
+            if(categoria){
+                const item = document.createElement('div');
+                item.className = 'budget-item';
+                item.innerHTML = `
+                    <div class="info">
+                        <span>${categoria.nome}</span>
+                        <span>${formatarMoeda(gasto)} / ${formatarMoeda(orc.limite)}</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-bar-inner ${percentual > 100 ? 'over-budget' : ''}" style="width: ${Math.min(percentual, 100)}%;"></div>
+                    </div>
+                `;
+                budgetSummaryContainer.appendChild(item);
+            }
         });
     };
 
@@ -135,20 +141,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const atualizarGraficos = (todasTransacoes, transacoesMes) => {
         if(pieChart) pieChart.destroy();
-        const gastosPorCategoria = transacoesMes
-            .filter(t => t.tipo === 'despesa')
-            .reduce((acc, t) => {
-                const categoriaNome = categorias.find(c => c.id === t.categoriaId)?.nome || 'Outros';
-                acc[categoriaNome] = (acc[categoriaNome] || 0) + Math.abs(t.valor);
-                return acc;
-            }, {});
+        const gastosPorCategoria = transacoesMes.filter(t => t.tipo === 'despesa').reduce((acc, t) => {
+            const categoriaNome = categorias.find(c => c.id === t.categoriaId)?.nome || 'Outros';
+            acc[categoriaNome] = (acc[categoriaNome] || 0) + Math.abs(t.valor);
+            return acc;
+        }, {});
         
         pieChart = new Chart(pieChartCtx, {
             type: 'doughnut',
-            data: {
-                labels: Object.keys(gastosPorCategoria),
-                datasets: [{ data: Object.values(gastosPorCategoria), backgroundColor: ['#e35050', '#4a90e2', '#f5a623', '#9013fe', '#417505', '#bd10e0', '#f8e71c', '#7ed321'] }]
-            },
+            data: { labels: Object.keys(gastosPorCategoria), datasets: [{ data: Object.values(gastosPorCategoria), backgroundColor: ['#e35050', '#4a90e2', '#f5a623', '#9013fe', '#417505', '#bd10e0', '#f8e71c', '#7ed321'] }] },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
         });
 
@@ -201,6 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         salvarDados();
         form.reset();
+        dataInput.valueAsDate = new Date(); // Resetar a data para hoje
         atualizarVisibilidadeFormulario();
         init();
     });
