@@ -1,18 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
     // === ESTADO DA APLICAÇÃO ===
-    let categorias = JSON.parse(localStorage.getItem('categorias_v3')) || [
+    let categorias = JSON.parse(localStorage.getItem('categorias_v4')) || [
         { id: 1, nome: 'Salário', tipo: 'receita' },
         { id: 2, nome: 'Moradia', tipo: 'despesa' },
         { id: 3, nome: 'Alimentação', tipo: 'despesa' },
     ];
-    let orcamentos = JSON.parse(localStorage.getItem('orcamentos_v3')) || [];
+    let orcamentos = JSON.parse(localStorage.getItem('orcamentos_v4')) || [];
 
     const formCategoria = document.getElementById('form-categoria');
     const formOrcamento = document.getElementById('form-orcamento');
 
     const salvarDados = () => {
-        localStorage.setItem('categorias_v3', JSON.stringify(categorias));
-        localStorage.setItem('orcamentos_v3', JSON.stringify(orcamentos));
+        localStorage.setItem('categorias_v4', JSON.stringify(categorias));
+        localStorage.setItem('orcamentos_v4', JSON.stringify(orcamentos));
     };
 
     // === LÓGICA DE CATEGORIAS (categorias.html) ===
@@ -22,37 +22,45 @@ document.addEventListener('DOMContentLoaded', () => {
         const listaReceitasEl = document.getElementById('lista-receitas');
 
         const renderizarCategorias = () => {
+            if (!listaDespesasEl || !listaReceitasEl) return;
             listaDespesasEl.innerHTML = '';
             listaReceitasEl.innerHTML = '';
-            categorias.forEach(cat => {
-                const li = document.createElement('li');
-                li.innerHTML = `<span>${cat.nome}</span> <button class="delete-btn" data-id="${cat.id}">✖</button>`;
-                if (cat.tipo === 'despesa') {
-                    listaDespesasEl.appendChild(li);
-                } else {
-                    listaReceitasEl.appendChild(li);
-                }
-            });
+            
+            if (categorias.length === 0) {
+                 listaDespesasEl.innerHTML = '<li>Nenhuma categoria de despesa.</li>';
+                 listaReceitasEl.innerHTML = '<li>Nenhuma categoria de receita.</li>';
+            } else {
+                categorias.forEach(cat => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span>${cat.nome}</span> <button class="delete-btn" data-id="${cat.id}">✖</button>`;
+                    if (cat.tipo === 'despesa') {
+                        listaDespesasEl.appendChild(li);
+                    } else {
+                        listaReceitasEl.appendChild(li);
+                    }
+                });
+            }
         };
 
         formCategoria.addEventListener('submit', (e) => {
             e.preventDefault();
             const nome = nomeCategoriaInput.value.trim();
             const tipo = document.querySelector('input[name="categoria-tipo"]:checked').value;
-            if (nome) {
+            if (nome && !categorias.some(c => c.nome.toLowerCase() === nome.toLowerCase())) {
                 categorias.push({ id: Date.now(), nome, tipo });
                 salvarDados();
                 renderizarCategorias();
                 nomeCategoriaInput.value = '';
+            } else if (nome) {
+                alert('Essa categoria já existe.');
             }
         });
 
         document.body.addEventListener('click', (e) => {
-            if (e.target.classList.contains('delete-btn')) {
+            if (e.target.classList.contains('delete-btn') && e.target.closest('#lista-despesas, #lista-receitas')) {
                 const id = parseInt(e.target.getAttribute('data-id'));
                 categorias = categorias.filter(cat => cat.id !== id);
-                // Também remove orçamentos associados
-                orcamentos = orcamentos.filter(orc => orc.categoriaId !== id);
+                orcamentos = orcamentos.filter(orc => orc.categoriaId !== id); // Remove orçamentos associados
                 salvarDados();
                 renderizarCategorias();
             }
@@ -80,18 +88,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const renderizarOrcamentos = () => {
             listaOrcamentosEl.innerHTML = '';
-            orcamentos.forEach(orc => {
-                const categoria = categorias.find(c => c.id === orc.categoriaId);
-                if (categoria) {
-                    const item = document.createElement('div');
-                    item.className = 'orcamento-list-item';
-                    item.innerHTML = `
-                        <span><strong>${categoria.nome}:</strong> R$ ${orc.limite.toFixed(2)}</span>
-                        <button class="delete-btn" data-id="${orc.categoriaId}">✖</button>
-                    `;
-                    listaOrcamentosEl.appendChild(item);
-                }
-            });
+            if (orcamentos.length === 0) {
+                listaOrcamentosEl.innerHTML = '<p class="placeholder-text">Nenhum orçamento definido.</p>';
+            } else {
+                orcamentos.forEach(orc => {
+                    const categoria = categorias.find(c => c.id === orc.categoriaId);
+                    if (categoria) {
+                        const item = document.createElement('div');
+                        item.className = 'orcamento-list-item';
+                        item.innerHTML = `
+                            <span><strong>${categoria.nome}:</strong> ${orc.limite.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                            <button class="delete-btn" data-id="${orc.categoriaId}">✖</button>
+                        `;
+                        listaOrcamentosEl.appendChild(item);
+                    }
+                });
+            }
         };
 
         formOrcamento.addEventListener('submit', (e) => {
@@ -100,7 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const limite = parseFloat(valorInput.value);
 
             if (categoriaId && limite > 0) {
-                // Remove o orçamento antigo se já existir, e adiciona o novo
                 orcamentos = orcamentos.filter(o => o.categoriaId !== categoriaId);
                 orcamentos.push({ categoriaId, limite });
                 salvarDados();

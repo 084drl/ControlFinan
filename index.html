@@ -50,8 +50,7 @@
              <div class="card">
                 <h2>Resumo dos Orçamentos</h2>
                 <div id="budget-summary-container" class="budget-summary">
-                    <!-- Orçamentos serão inseridos aqui -->
-                    <p class="placeholder-text">Nenhum orçamento definido para este mês. Vá para a página de Orçamentos para criar.</p>
+                    <p class="placeholder-text">Nenhum orçamento definido para este mês.</p>
                 </div>
             </div>
         </section>
@@ -68,7 +67,6 @@
             </div>
         </section>
         
-
         <!-- Seção para Adicionar Nova Transação -->
         <section class="card">
             <h2>Adicionar Nova Transação</h2>
@@ -78,7 +76,7 @@
                     <div class="form-control"><label for="valor">Valor</label><input type="number" id="valor" step="0.01" required></div>
                     <div class="form-control"><label for="data">Data</label><input type="date" id="data" required></div>
                     <div class="form-control" style="grid-column: 1 / 3;">
-                        <label for="categoria">Categoria</label>
+                        <label for="categoria-select">Categoria</label>
                         <select id="categoria-select" required></select>
                     </div>
                 </div>
@@ -87,9 +85,15 @@
                     <label><input type="radio" name="tipo" value="despesa"> Despesa</label>
                     <label><input type="radio" name="tipo" value="investimento"> Investimento</label>
                 </div>
-                <div id="parcelamento-container" style="display:none;">
-                    <div class="form-control checkbox-group">
-                        <label><input type="checkbox" id="is-parcelada"> É Compra Parcelada?</label>
+                <!-- Opções de Fixo e Parcelado -->
+                <div id="extra-options-container" style="display: none;">
+                    <div class="checkbox-options">
+                        <div class="form-control checkbox-group">
+                            <label><input type="checkbox" id="is-fixo"> Marcar como Fixo (recorrente)</label>
+                        </div>
+                        <div class="form-control checkbox-group">
+                            <label><input type="checkbox" id="is-parcelada"> É Compra Parcelada?</label>
+                        </div>
                     </div>
                     <div class="form-control" id="parcelas-input-container" style="display: none;">
                         <label for="parcelas">Nº de Parcelas</label>

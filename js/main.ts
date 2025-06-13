@@ -1,9 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
     // === ESTADO DA APLICAÇÃO ===
-    let transacoes = JSON.parse(localStorage.getItem('transacoes_v3')) || [];
-    let comprasParceladas = JSON.parse(localStorage.getItem('comprasParceladas_v3')) || [];
-    let categorias = JSON.parse(localStorage.getItem('categorias_v3')) || [];
-    let orcamentos = JSON.parse(localStorage.getItem('orcamentos_v3')) || [];
+    let transacoes = JSON.parse(localStorage.getItem('transacoes_v4')) || [];
+    let comprasParceladas = JSON.parse(localStorage.getItem('comprasParceladas_v4')) || [];
+    let categorias = JSON.parse(localStorage.getItem('categorias_v4')) || [];
+    let orcamentos = JSON.parse(localStorage.getItem('orcamentos_v4')) || [];
     let monthlyChart, pieChart;
 
     // === SELETORES DO DOM ===
@@ -12,7 +12,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const valorInput = document.getElementById('valor');
     const dataInput = document.getElementById('data');
     const categoriaSelect = document.getElementById('categoria-select');
-    const parcelamentoContainer = document.getElementById('parcelamento-container');
+    // Seletores para Fixo e Parcelado
+    const extraOptionsContainer = document.getElementById('extra-options-container');
+    const isFixoInput = document.getElementById('is-fixo');
     const isParceladaInput = document.getElementById('is-parcelada');
     const parcelasInputContainer = document.getElementById('parcelas-input-container');
 
@@ -25,13 +27,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // === FUNÇÕES AUXILIARES ===
     const formatarMoeda = (valor) => valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     const salvarDados = () => {
-        localStorage.setItem('transacoes_v3', JSON.stringify(transacoes));
-        localStorage.setItem('comprasParceladas_v3', JSON.stringify(comprasParceladas));
+        localStorage.setItem('transacoes_v4', JSON.stringify(transacoes));
+        localStorage.setItem('comprasParceladas_v4', JSON.stringify(comprasParceladas));
     };
 
     // === LÓGICA DE INTERFACE E FORMULÁRIO ===
     const carregarCategorias = (tipo) => {
-        categoriaSelect.innerHTML = '<option value="" disabled selected>Selecione...</option>';
+        categoriaSelect.innerHTML = '<option value="" disabled selected>Selecione uma categoria...</option>';
         const categoriasFiltradas = categorias.filter(c => c.tipo === tipo);
         categoriasFiltradas.forEach(cat => {
             const option = document.createElement('option');
@@ -44,16 +46,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const atualizarVisibilidadeFormulario = () => {
         const tipoSelecionado = document.querySelector('input[name="tipo"]:checked').value;
         carregarCategorias(tipoSelecionado);
-        parcelamentoContainer.style.display = tipoSelecionado === 'despesa' ? 'block' : 'none';
-        if (tipoSelecionado !== 'despesa') {
-            isParceladaInput.checked = false;
-            parcelasInputContainer.style.display = 'none';
+        
+        if (tipoSelecionado === 'despesa') {
+            extraOptionsContainer.style.display = 'block';
+            isFixoInput.disabled = isParceladaInput.checked;
+            isParceladaInput.disabled = isFixoInput.checked;
+            parcelasInputContainer.style.display = isParceladaInput.checked ? 'block' : 'none';
+        } else {
+            extraOptionsContainer.style.display = 'none';
         }
     };
     document.querySelectorAll('input[name="tipo"]').forEach(radio => radio.addEventListener('change', atualizarVisibilidadeFormulario));
-    isParceladaInput.addEventListener('change', () => {
-        parcelasInputContainer.style.display = isParceladaInput.checked ? 'block' : 'none';
-    });
+    isParceladaInput.addEventListener('change', atualizarVisibilidadeFormulario);
+    isFixoInput.addEventListener('change', atualizarVisibilidadeFormulario);
 
     // === LÓGICA DE DADOS E RENDERIZAÇÃO ===
     const gerarTransacoesCompletas = () => {
@@ -61,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         comprasParceladas.forEach(compra => {
             const valorParcela = compra.valorTotal / compra.numParcelas;
             for (let i = 0; i < compra.numParcelas; i++) {
-                const dataParcela = new Date(compra.dataInicio);
+                const dataParcela = new Date(compra.dataInicio + 'T00:00:00');
                 dataParcela.setMonth(dataParcela.getMonth() + i);
                 transacoesGeradas.push({
                     id: `${compra.id}-${i}`, descricao: `${compra.descricao} (${i + 1}/${compra.numParcelas})`,
@@ -83,7 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
         mesInvestimentosEl.textContent = formatarMoeda(investimentos);
         mesSaldoEl.textContent = formatarMoeda(receitas - despesas - investimentos);
 
-        // Renderizar resumo de orçamentos
         budgetSummaryContainer.innerHTML = '';
         const orcamentosDoMes = orcamentos.filter(orc => categorias.find(c => c.id === orc.categoriaId));
         if (orcamentosDoMes.length === 0) {
@@ -119,18 +123,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const valorClasse = t.tipo;
             const item = document.createElement('tr');
             item.innerHTML = `
-                <td>${t.descricao}</td>
+                <td>${t.descricao} ${t.isFixo ? '📌' : ''}</td>
                 <td class="valor ${valorClasse}">${formatarMoeda(t.valor)}</td>
                 <td>${categoria}</td>
                 <td>${new Date(t.data + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                <td><button class="delete-btn" data-id="${t.id}" data-is-parcela="${t.isParcela || false}">✖</button></td>
+                <td><button class="delete-btn" data-id="${t.id}" data-is-parcela="${t.isParcela || false}" data-is-fixo="${t.isFixo || false}">✖</button></td>
             `;
             listaTransacoesEl.appendChild(item);
         });
     };
 
     const atualizarGraficos = (todasTransacoes, transacoesMes) => {
-        // Gráfico de Pizza - Categorias do mês
         if(pieChart) pieChart.destroy();
         const gastosPorCategoria = transacoesMes
             .filter(t => t.tipo === 'despesa')
@@ -144,12 +147,11 @@ document.addEventListener('DOMContentLoaded', () => {
             type: 'doughnut',
             data: {
                 labels: Object.keys(gastosPorCategoria),
-                datasets: [{ data: Object.values(gastosPorCategoria), backgroundColor: ['#e35050', '#4a90e2', '#f5a623', '#9013fe', '#417505', '#bd10e0'] }]
+                datasets: [{ data: Object.values(gastosPorCategoria), backgroundColor: ['#e35050', '#4a90e2', '#f5a623', '#9013fe', '#417505', '#bd10e0', '#f8e71c', '#7ed321'] }]
             },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
         });
 
-        // Gráfico de Barras - Histórico
         if(monthlyChart) monthlyChart.destroy();
         const historicoData = { labels: [], datasets: [{ label: 'Receitas', data: [], backgroundColor: 'var(--success-color)' }, { label: 'Despesas', data: [], backgroundColor: 'var(--danger-color)' }] };
         for (let i = 5; i >= 0; i--) {
@@ -157,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
             historicoData.labels.push(d.toLocaleString('pt-BR', { month: 'short' }));
             const transacoesPeriodo = todasTransacoes.filter(t => new Date(t.data+'T00:00:00').getMonth() === d.getMonth() && new Date(t.data+'T00:00:00').getFullYear() === d.getFullYear());
             historicoData.datasets[0].data.push(transacoesPeriodo.filter(t => t.tipo === 'receita').reduce((a, b) => a + b.valor, 0));
-            historicoData.datasets[1].data.push(transacoesPeriodo.filter(t => t.tipo === 'despesa').reduce((a, b) => a + Math.abs(b.valor), 0));
+            historicoData.datasets[1].data.push(transacoesPeriodo.filter(t => t.tipo === 'despesa' || t.tipo === 'investimento').reduce((a, b) => a + Math.abs(b.valor), 0));
         }
         monthlyChart = new Chart(monthlyChartCtx, { type: 'bar', data: historicoData, options: { responsive: true, maintainAspectRatio: false } });
     };
@@ -185,15 +187,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = dataInput.value;
         const tipo = document.querySelector('input[name="tipo"]:checked').value;
         const categoriaId = parseInt(categoriaSelect.value);
+        const isFixo = isFixoInput.checked;
         const isParcelada = isParceladaInput.checked;
 
-        if (!descricao || !valor || !data || !categoriaId) { alert('Preencha todos os campos!'); return; }
+        if (!descricao || !valor || !data || !categoriaId) { alert('Preencha todos os campos obrigatórios!'); return; }
         
         if (isParcelada && tipo === 'despesa') {
             const numParcelas = parseInt(document.getElementById('parcelas').value);
             comprasParceladas.push({ id: Date.now(), descricao, valorTotal: valor, dataInicio: data, numParcelas, categoriaId });
         } else {
-            transacoes.push({ id: Date.now(), descricao, valor: tipo === 'receita' ? valor : -valor, data, tipo, categoriaId });
+            transacoes.push({ id: Date.now(), descricao, valor: tipo === 'receita' ? valor : -valor, data, tipo, categoriaId, isFixo });
         }
         
         salvarDados();
