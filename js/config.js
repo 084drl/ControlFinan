@@ -1,18 +1,28 @@
-document.addEventListener('DOMContentLoaded', async () => {
-    // --- Estado Global da Aplicação ---
-    let appData = {};
+document.addEventListener('DOMContentLoaded', () => {
+    let appData = { categorias: [], orcamentos: [], transacoes: [], comprasParceladas: [] };
 
-    // --- Seletores do DOM ---
-    const mainContent = document.querySelector('main');
     const formCategoria = document.getElementById('form-categoria');
     const formOrcamento = document.getElementById('form-orcamento');
+    const mainContent = document.querySelector('main');
 
-    // --- Funções de API ---
+    async function salvarDados() {
+        try {
+            document.body.style.cursor = 'wait';
+            await fetch('/.netlify/functions/transacoes', { method: 'POST', body: JSON.stringify(appData) });
+        } catch (error) {
+            console.error("Erro ao salvar:", error);
+            alert("Não foi possível salvar as alterações.");
+        } finally {
+            document.body.style.cursor = 'default';
+        }
+    }
+
     async function carregarDados() {
         try {
             const response = await fetch('/.netlify/functions/transacoes');
-            if (!response.ok) throw new Error('Falha ao buscar dados.');
+            if (!response.ok) throw new Error('Falha na resposta do servidor.');
             const data = await response.json();
+            
             appData = {
                 categorias: data.categorias || [],
                 orcamentos: data.orcamentos || [],
@@ -21,19 +31,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
             return true;
         } catch (error) {
-            console.error("Erro Crítico:", error);
+            console.error("Erro ao carregar dados:", error);
             mainContent.innerHTML = `<div class="card"><p class="error-text" style="display:block;">Erro ao carregar dados.</p></div>`;
             return false;
         }
     }
 
-    async function salvarDados() {
-        try {
-            await fetch('/.netlify/functions/transacoes', { method: 'POST', body: JSON.stringify(appData) });
-        } catch (error) { console.error("Erro ao salvar:", error); }
-    }
-
-    // --- Lógica da Página de Categorias ---
     function renderizarPaginaCategorias() {
         const nomeCategoriaInput = document.getElementById('categoria-nome');
         const listaDespesasEl = document.getElementById('lista-despesas');
@@ -68,6 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (e.target.classList.contains('delete-btn') && e.target.closest('.category-list')) {
                 const id = parseInt(e.target.dataset.id);
                 appData.categorias = appData.categorias.filter(cat => cat.id !== id);
+                appData.orcamentos = appData.orcamentos.filter(orc => orc.categoriaId !== id);
                 await salvarDados();
                 renderizarListas();
             }
@@ -76,14 +80,69 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderizarListas();
     }
 
-    // --- Lógica da Página de Orçamentos ---
     function renderizarPaginaOrcamentos() {
-        // ... (sua lógica para a página de orçamentos vai aqui)
-    }
+        const categoriaSelect = document.getElementById('orcamento-categoria-select');
+        const valorInput = document.getElementById('orcamento-valor');
+        const listaOrcamentosEl = document.getElementById('lista-orcamentos');
 
-    // --- Ponto de Entrada ---
-    if (await carregarDados()) {
-        if (formCategoria) renderizarPaginaCategorias();
-        if (formOrcamento) renderizarPaginaOrcamentos();
+        function carregarCategoriasDeDespesa() {
+            categoriaSelect.innerHTML = '<option value="" disabled selected>Selecione uma categoria...</option>';
+            appData.categorias.filter(c => c.tipo === 'despesa').forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat.id;
+                option.textContent = cat.nome;
+                categoriaSelect.appendChild(option);
+            });
+        }
+
+        function renderizarOrcamentos() {
+            listaOrcamentosEl.innerHTML = '';
+            if (appData.orcamentos.length === 0) {
+                 listaOrcamentosEl.innerHTML = '<p class="placeholder-text">Nenhum orçamento definido.</p>';
+                 return;
+            }
+            appData.orcamentos.forEach(orc => {
+                const categoria = appData.categorias.find(c => c.id === orc.categoriaId);
+                if (categoria) {
+                    const item = document.createElement('div');
+                    item.className = 'orcamento-list-item';
+                    item.innerHTML = `<span><strong>${categoria.nome}:</strong> ${orc.limite.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span> <button class="delete-btn" data-id="${orc.categoriaId}">✖</button>`;
+                    listaOrcamentosEl.appendChild(item);
+                }
+            });
+        }
+
+        formOrcamento.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const categoriaId = parseInt(categoriaSelect.value);
+            const limite = parseFloat(valorInput.value);
+            if (categoriaId && limite > 0) {
+                appData.orcamentos = appData.orcamentos.filter(o => o.categoriaId !== categoriaId);
+                appData.orcamentos.push({ categoriaId, limite });
+                await salvarDados();
+                renderizarOrcamentos();
+                formOrcamento.reset();
+            }
+        });
+
+        listaOrcamentosEl.addEventListener('click', async (e) => {
+            if (e.target.classList.contains('delete-btn')) {
+                const id = parseInt(e.target.dataset.id);
+                appData.orcamentos = appData.orcamentos.filter(o => o.categoriaId !== id);
+                await salvarDados();
+                renderizarOrcamentos();
+            }
+        });
+
+        carregarCategoriasDeDespesa();
+        renderizarOrcamentos();
     }
+    
+    // Ponto de entrada do script
+    (async () => {
+        if (await carregarDados()) {
+            if (formCategoria) renderizarPaginaCategorias();
+            if (formOrcamento) renderizarPaginaOrcamentos();
+        }
+    })();
 });
