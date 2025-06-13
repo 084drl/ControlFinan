@@ -1,0 +1,14 @@
+{
+  "name": "controle-financeiro",
+  "version": "1.0.0",
+  "description": "Controle financeiro com backend Netlify",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@netlify/blobs": "^7.5.0"
+  }
+}
