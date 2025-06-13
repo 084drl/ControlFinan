@@ -7,12 +7,11 @@ const sendResponse = (statusCode, body) => {
   });
 };
 
-export default async (req) => {
-  // 'dados-financeiros' é o nome do nosso "banco de dados" de transações
-  const store = getStore("dados-financeiros");
+// MUDANÇA CRÍTICA: Adicionamos 'context' como segundo parâmetro
+export default async (req, context) => {
+  // MUDANÇA CRÍTICA: Passando o 'context' para getStore
+  const store = getStore({ name: "dados-financeiros", siteID: context.site.id });
   
-  // Em um sistema real, o userId viria de um login seguro.
-  // Por enquanto, todos os dados são salvos sob uma única chave.
   const userId = "dados_do_casal";
 
   try {
@@ -20,11 +19,7 @@ export default async (req) => {
       case "GET": {
         let dados = await store.get(userId, { type: "json" });
 
-        // --- CORREÇÃO PRINCIPAL APLICADA AQUI ---
-        // Se não houver dados salvos para este usuário (primeiro acesso),
-        // criamos e retornamos um conjunto de dados padrão.
         if (!dados) {
-          console.log(`[DADOS] Nenhum dado encontrado para '${userId}'. Criando dados padrão.`);
           dados = {
             transacoes: [],
             comprasParceladas: [],
@@ -35,10 +30,8 @@ export default async (req) => {
             ],
             orcamentos: []
           };
-          // Salva os dados padrão para que existam na próxima vez
           await store.setJSON(userId, dados);
         }
-
         return sendResponse(200, dados);
       }
       
