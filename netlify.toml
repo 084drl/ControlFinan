@@ -3,3 +3,6 @@
 
 [functions]
   node_bundler = "esbuild"
+  # A linha abaixo é a correção.
+  # Ela diz ao Netlify para garantir que o módulo 'crypto' seja tratado corretamente.
+  external_node_modules = ["crypto"]
