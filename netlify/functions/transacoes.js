@@ -7,11 +7,8 @@ const sendResponse = (statusCode, body) => {
   });
 };
 
-// MUDANÇA CRÍTICA: Adicionamos 'context' como segundo parâmetro
 export default async (req, context) => {
-  // MUDANÇA CRÍTICA: Passando o 'context' para getStore
   const store = getStore({ name: "dados-financeiros", siteID: context.site.id });
-  
   const userId = "dados_do_casal";
 
   try {
@@ -19,26 +16,20 @@ export default async (req, context) => {
       case "GET": {
         let dados = await store.get(userId, { type: "json" });
 
+        // --- LÓGICA DE PERSISTÊNCIA CORRIGIDA ---
+        // Apenas retorna os dados que existem. Se não existir nada, retorna um objeto vazio.
+        // O front-end será responsável por lidar com o estado inicial.
         if (!dados) {
-          dados = {
-            transacoes: [],
-            comprasParceladas: [],
-            categorias: [
-              { id: 1, nome: 'Salário', tipo: 'receita' },
-              { id: 2, nome: 'Moradia', tipo: 'despesa' },
-              { id: 3, nome: 'Alimentação', tipo: 'despesa' }
-            ],
-            orcamentos: []
-          };
-          await store.setJSON(userId, dados);
+            return sendResponse(200, {}); // Retorna vazio, NÃO sobrescreve nada.
         }
         return sendResponse(200, dados);
       }
       
       case "POST": {
+        // A ação de POST é a única que pode escrever/sobrescrever os dados.
         const novosDados = await req.json();
         if (!novosDados) {
-          return sendResponse(400, { message: "Nenhum dado recebido." });
+          return sendResponse(400, { message: "Nenhum dado recebido para salvar." });
         }
         await store.setJSON(userId, novosDados);
         return sendResponse(200, { message: "Dados salvos com sucesso!" });

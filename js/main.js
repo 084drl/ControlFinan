@@ -49,10 +49,30 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error(`Erro do servidor: ${response.status}`);
             
             const data = await response.json();
+            
+            // LÓGICA DE INICIALIZAÇÃO CORRIGIDA NO FRONT-END
+            let dadosIniciaisForamCriados = false;
+            
             transacoes = data.transacoes || [];
             comprasParceladas = data.comprasParceladas || [];
-            categorias = data.categorias || [];
             orcamentos = data.orcamentos || [];
+
+            // Se não houver categorias, cria um conjunto padrão.
+            if (!data.categorias || data.categorias.length === 0) {
+                categorias = [
+                    { id: 1, nome: 'Salário', tipo: 'receita' },
+                    { id: 2, nome: 'Moradia', tipo: 'despesa' },
+                    { id: 3, nome: 'Alimentação', tipo: 'despesa' }
+                ];
+                dadosIniciaisForamCriados = true;
+            } else {
+                categorias = data.categorias;
+            }
+            
+            // Se criamos dados padrão, salvamos eles no backend imediatamente.
+            if (dadosIniciaisForamCriados) {
+                await salvarDados();
+            }
             
             renderizarPaginaCompleta();
         } catch (error) {
@@ -120,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mesInvestimentosEl.textContent = formatarMoeda(investimentos);
         mesSaldoEl.textContent = formatarMoeda(receitas - despesas - investimentos);
 
-        // ... Lógica para KPIs e Orçamentos ...
+        // ... (Lógica para KPIs e Orçamentos aqui)
     };
 
     const renderizarTabela = (transacoesParaExibir) => {
@@ -145,7 +165,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const gastosPorCategoria = transacoesMes.filter(t => t.tipo === 'despesa').reduce((acc, t) => { const catNome = categorias.find(c => c.id === t.categoriaId)?.nome || 'Outros'; acc[catNome] = (acc[catNome] || 0) + Math.abs(t.valor); return acc; }, {});
             charts.pie = new Chart(pieChartCtx, { type: 'doughnut', data: { labels: Object.keys(gastosPorCategoria), datasets: [{ data: Object.values(gastosPorCategoria), backgroundColor: ['#e35050', '#4a90e2', '#f5a623', '#9013fe', '#417505', '#bd10e0'] }] }, options: { responsive: true, maintainAspectRatio: false } });
         }
-        // ... (outros gráficos)
+        
+        // ... (outros gráficos aqui)
     };
     
     const renderizarPaginaCompleta = () => {
@@ -160,38 +181,61 @@ document.addEventListener('DOMContentLoaded', () => {
         renderizarTabela(transacoesMes.filter(t => !t.isProjecao || new Date(t.data).getMonth() === hoje.getMonth()));
         atualizarGraficos(todasTransacoes, transacoesMes);
         atualizarVisibilidadeFormulario();
-        dataInput.valueAsDate = new Date();
+        if (dataInput) dataInput.valueAsDate = new Date();
     };
 
     // --- EVENT LISTENERS ---
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const novaTransacao = {
-            id: Date.now(),
-            descricao: descricaoInput.value.trim(),
-            valor: parseFloat(valorInput.value),
-            data: dataInput.value,
-            tipo: document.querySelector('input[name="tipo"]:checked').value,
-            categoriaId: parseInt(categoriaSelect.value),
-            isFixo: isFixoInput.checked
-        };
-        if (!novaTransacao.descricao || !novaTransacao.valor || !novaTransacao.data || !novaTransacao.categoriaId) {
-            alert('Preencha todos os campos obrigatórios!');
-            return;
-        }
-
-        if (isParceladaInput.checked) {
-            comprasParceladas.push({ ...novaTransacao, valorTotal: novaTransacao.valor, numParcelas: parseInt(document.getElementById('parcelas').value) });
-        } else {
-            transacoes.push({ ...novaTransacao, valor: novaTransacao.tipo === 'receita' ? novaTransacao.valor : -novaTransacao.valor });
-        }
-        
-        await salvarDados();
-        form.reset();
-        dataInput.valueAsDate = new Date();
-        renderizarPaginaCompleta();
-    });
+    if(form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const novaTransacao = {
+                id: Date.now(),
+                descricao: descricaoInput.value.trim(),
+                valor: parseFloat(valorInput.value),
+                data: dataInput.value,
+                tipo: document.querySelector('input[name="tipo"]:checked').value,
+                categoriaId: parseInt(categoriaSelect.value),
+                isFixo: isFixoInput.checked
+            };
+            if (!novaTransacao.descricao || !novaTransacao.valor || !novaTransacao.data || !novaTransacao.categoriaId) {
+                alert('Preencha todos os campos obrigatórios!');
+                return;
+            }
     
+            if (isParceladaInput.checked) {
+                comprasParceladas.push({ ...novaTransacao, valorTotal: novaTransacao.valor, numParcelas: parseInt(document.getElementById('parcelas').value) });
+            } else {
+                transacoes.push({ ...novaTransacao, valor: novaTransacao.tipo === 'receita' ? novaTransacao.valor : -novaTransacao.valor });
+            }
+            
+            await salvarDados();
+            form.reset();
+            dataInput.valueAsDate = new Date();
+            renderizarPaginaCompleta();
+        });
+    }
+    
+    if(listaTransacoesEl){
+        listaTransacoesEl.addEventListener('click', async (e) => {
+            if(e.target.classList.contains('delete-btn')) {
+                const id = e.target.dataset.id;
+                const isParcela = e.target.dataset.isParcela === 'true';
+
+                if (isParcela) {
+                    if (confirm('Esta é uma parcela. Deseja remover TODA a compra original?')) {
+                        const compraPaiId = gerarTransacoesCompletas().find(t => t.id === id)?.compraPaiId;
+                        comprasParceladas = comprasParceladas.filter(c => c.id !== compraPaiId);
+                    }
+                } else {
+                    transacoes = transacoes.filter(t => t.id != id);
+                }
+                
+                await salvarDados();
+                renderizarPaginaCompleta();
+            }
+        });
+    }
+
     // Ponto de entrada da aplicação
     carregarDadosEIniciar();
 });
