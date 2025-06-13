@@ -3,60 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Script de proteção de rota (DEVE SER O PRIMEIRO SCRIPT) -->
-    <script>
-        if (sessionStorage.getItem('loggedIn') !== 'true') {
-            window.location.href = 'login.html';
-        }
-    </script>
+    <script>if (sessionStorage.getItem('loggedIn') !== 'true') { window.location.href = 'login.html'; }</script>
     <title>Dashboard Financeiro Estratégico</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-
     <header>
         <div class="header-left">
              <h1>Dashboard</h1>
-             <nav>
-                <a href="index.html" class="active">Dashboard</a>
-                <a href="orcamentos.html">Orçamentos</a>
-                <a href="categorias.html">Categorias</a>
-             </nav>
+             <nav><a href="index.html" class="active">Dashboard</a><a href="orcamentos.html">Orçamentos</a><a href="categorias.html">Categorias</a></nav>
         </div>
         <div class="header-right">
             <button id="logout-btn" class="btn-logout">Sair</button>
             <div class="theme-switcher">
-                <span>☀️</span>
-                <label class="switch"><input type="checkbox" id="theme-toggle"><span class="slider round"></span></label>
-                <span>🌙</span>
+                <span>☀️</span><label class="switch"><input type="checkbox" id="theme-toggle"><span class="slider round"></span></label><span>🌙</span>
             </div>
         </div>
     </header>
 
     <main class="container">
-
-        <!-- ===== Resumo do Mês e Orçamentos ===== -->
-        <section class="dashboard-grid">
-            <div class="card">
-                <h2>Visão do Mês Atual</h2>
-                <div class="monthly-summary">
-                    <div class="summary-item"><span class="label-receita">Receitas</span><strong id="mes-receitas">R$ 0,00</strong></div>
-                    <div class="summary-item"><span class="label-despesa">Despesas</span><strong id="mes-despesas">R$ 0,00</strong></div>
-                    <div class="summary-item"><span class="label-investimento">Investimentos</span><strong id="mes-investimentos">R$ 0,00</strong></div>
-                    <div class="summary-item balance"><span>Saldo do Mês</span><strong id="mes-saldo">R$ 0,00</strong></div>
+        <!-- ===== Dashboard Estratégico em Grid ===== -->
+        <section class="strategic-grid">
+            <!-- Coluna 1: Visão Geral -->
+            <div class="card grid-col-span-2">
+                <h2>Visão Geral do Mês</h2>
+                <div class="main-summary">
+                    <div><span>Receitas</span><strong id="mes-receitas" class="label-receita">R$ 0,00</strong></div>
+                    <div><span>Despesas</span><strong id="mes-despesas" class="label-despesa">R$ 0,00</strong></div>
+                    <div><span>Investimentos</span><strong id="mes-investimentos" class="label-investimento">R$ 0,00</strong></div>
+                    <div class="balance"><span>Saldo do Mês</span><strong id="mes-saldo">R$ 0,00</strong></div>
                 </div>
             </div>
-             <div class="card">
+
+            <!-- Coluna 2: KPIs Estratégicos -->
+            <div class="card">
+                <h2>Planejamento Futuro</h2>
+                <div class="kpi-grid">
+                    <div class="kpi-card"><h4>Saldo Devedor Total</h4><p id="saldo-devedor">R$ 0,00</p></div>
+                    <div class="kpi-card"><h4>Compromisso Próx. Mês</h4><p id="proxima-fatura">R$ 0,00</p></div>
+                </div>
+            </div>
+
+            <!-- Coluna 3: Orçamentos -->
+            <div class="card">
                 <h2>Resumo dos Orçamentos</h2>
                 <div id="budget-summary-container" class="budget-summary">
-                    <p class="placeholder-text">Nenhum orçamento definido para este mês.</p>
+                    <p class="placeholder-text">Nenhum orçamento definido.</p>
                 </div>
             </div>
-        </section>
-
-        <!-- ===== Gráficos ===== -->
-        <section class="dashboard-grid">
+            
+            <!-- Linha 2: Gráficos -->
+            <div class="card chart-container grid-col-span-2">
+                <h3>Projeção de Fluxo de Caixa (Próximos 12 Meses)</h3>
+                <canvas id="projection-chart"></canvas>
+            </div>
             <div class="card chart-container">
                 <h3>Gastos por Categoria (Mês Atual)</h3>
                 <canvas id="category-pie-chart"></canvas>
@@ -75,36 +76,27 @@
                     <div class="form-control" style="grid-column: 1 / 3;"><label for="descricao">Descrição</label><input type="text" id="descricao" required></div>
                     <div class="form-control"><label for="valor">Valor</label><input type="number" id="valor" step="0.01" required></div>
                     <div class="form-control"><label for="data">Data</label><input type="date" id="data" required></div>
-                    <div class="form-control" style="grid-column: 1 / 3;">
-                        <label for="categoria-select">Categoria</label>
-                        <select id="categoria-select" required></select>
-                    </div>
+                    <div class="form-control" style="grid-column: 1 / 3;"><label for="categoria-select">Categoria</label><select id="categoria-select" required></select></div>
                 </div>
                 <div class="form-control radio-group">
                     <label><input type="radio" name="tipo" value="receita" checked> Receita</label>
                     <label><input type="radio" name="tipo" value="despesa"> Despesa</label>
                     <label><input type="radio" name="tipo" value="investimento"> Investimento</label>
                 </div>
-                <!-- Opções de Fixo e Parcelado -->
-                <div id="extra-options-container" style="display: none;">
+                <div id="extra-options-container">
                     <div class="checkbox-options">
-                        <div class="form-control checkbox-group">
-                            <label><input type="checkbox" id="is-fixo"> Marcar como Fixo (recorrente)</label>
-                        </div>
-                        <div class="form-control checkbox-group">
-                            <label><input type="checkbox" id="is-parcelada"> É Compra Parcelada?</label>
-                        </div>
+                        <div class="form-control checkbox-group" id="fixo-option-container"><label><input type="checkbox" id="is-fixo"> Marcar como Fixo (recorrente)</label></div>
+                        <div class="form-control checkbox-group" id="parcelado-option-container" style="display: none;"><label><input type="checkbox" id="is-parcelada"> É Compra Parcelada?</label></div>
                     </div>
                     <div class="form-control" id="parcelas-input-container" style="display: none;">
-                        <label for="parcelas">Nº de Parcelas</label>
-                        <input type="number" id="parcelas" min="2" value="2">
+                        <label for="parcelas">Nº de Parcelas</label><input type="number" id="parcelas" min="2" value="2">
                     </div>
                 </div>
                 <button type="submit" class="btn">Adicionar Transação</button>
             </form>
         </section>
 
-        <!-- Seção do Histórico de Transações -->
+        <!-- Histórico de Transações -->
         <section class="card">
             <h2>Histórico de Transações (Mês Atual)</h2>
             <table class="transaction-table">
@@ -113,7 +105,6 @@
             </table>
         </section>
     </main>
-
     <script src="js/auth.js"></script>
     <script src="js/main.js"></script>
 </body>
