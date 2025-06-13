@@ -14,8 +14,14 @@ export default async (req, context) => {
   try {
     switch (req.method) {
       case "GET": {
-        const dados = await store.get(userId, { type: "json" });
-        return sendResponse(200, dados || {}); // Retorna os dados ou um objeto vazio se não existir
+        let dados = await store.get(userId, { type: "json" });
+
+        // Se não houver dados salvos (primeiro acesso), retorna um objeto vazio.
+        // O front-end será responsável por criar os dados padrão.
+        if (!dados) {
+          return sendResponse(200, {});
+        }
+        return sendResponse(200, dados);
       }
       
       case "POST": {

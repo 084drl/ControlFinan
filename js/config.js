@@ -1,9 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
-    let appData = { categorias: [], orcamentos: [], transacoes: [], comprasParceladas: [] };
-
+    let appData = {};
+    const mainContent = document.querySelector('main');
     const formCategoria = document.getElementById('form-categoria');
     const formOrcamento = document.getElementById('form-orcamento');
-    const mainContent = document.querySelector('main');
 
     async function salvarDados() {
         try {
@@ -11,7 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
             await fetch('/.netlify/functions/transacoes', { method: 'POST', body: JSON.stringify(appData) });
         } catch (error) {
             console.error("Erro ao salvar:", error);
-            alert("Não foi possível salvar as alterações.");
         } finally {
             document.body.style.cursor = 'default';
         }
@@ -89,18 +87,14 @@ document.addEventListener('DOMContentLoaded', () => {
             categoriaSelect.innerHTML = '<option value="" disabled selected>Selecione uma categoria...</option>';
             appData.categorias.filter(c => c.tipo === 'despesa').forEach(cat => {
                 const option = document.createElement('option');
-                option.value = cat.id;
-                option.textContent = cat.nome;
+                option.value = cat.id; option.textContent = cat.nome;
                 categoriaSelect.appendChild(option);
             });
         }
 
         function renderizarOrcamentos() {
             listaOrcamentosEl.innerHTML = '';
-            if (appData.orcamentos.length === 0) {
-                 listaOrcamentosEl.innerHTML = '<p class="placeholder-text">Nenhum orçamento definido.</p>';
-                 return;
-            }
+            if (appData.orcamentos.length === 0) { listaOrcamentosEl.innerHTML = '<p class="placeholder-text">Nenhum orçamento definido.</p>'; return; }
             appData.orcamentos.forEach(orc => {
                 const categoria = appData.categorias.find(c => c.id === orc.categoriaId);
                 if (categoria) {
@@ -138,7 +132,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderizarOrcamentos();
     }
     
-    // Ponto de entrada do script
     (async () => {
         if (await carregarDados()) {
             if (formCategoria) renderizarPaginaCategorias();

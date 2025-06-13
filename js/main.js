@@ -1,10 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Estado Global da Aplicação ---
-    let appData = { transacoes: [], comprasParceladas: [], categorias: [], orcamentos: [] };
-    let charts = { monthly: null, pie: null, projection: null };
+    // --- Estado Global ---
+    let appData = {};
+    let charts = {};
 
-    // --- Seletores do DOM ---
+    // --- Seletores Globais ---
     const mainElement = document.querySelector('main');
+    const loadingIndicator = document.getElementById('loading-indicator');
+    const dashboardContent = document.getElementById('dashboard-content');
 
     // --- Funções de API ---
     async function carregarDados() {
@@ -14,13 +16,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             
             let dadosIniciaisForamCriados = false;
-            
             appData.transacoes = data.transacoes || [];
             appData.comprasParceladas = data.comprasParceladas || [];
             appData.orcamentos = data.orcamentos || [];
 
             if (!data.categorias || data.categorias.length === 0) {
-                appData.categorias = [{ id: Date.now() + 1, nome: 'Salário', tipo: 'receita' }, { id: Date.now() + 2, nome: 'Moradia', tipo: 'despesa' }];
+                appData.categorias = [{ id: Date.now(), nome: 'Salário', tipo: 'receita' }];
                 dadosIniciaisForamCriados = true;
             } else {
                 appData.categorias = data.categorias;
@@ -30,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return true;
         } catch (error) {
             console.error("Erro ao carregar dados:", error);
-            mainElement.innerHTML = `<div class="card"><p class="error-text" style="display:block;">Erro ao carregar dados.</p></div>`;
+            loadingIndicator.innerHTML = `<p class="error-text" style="display:block;">Erro ao carregar dados.</p>`;
             return false;
         }
     }
@@ -41,14 +42,12 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) { console.error("Erro ao salvar:", error); }
     }
 
-    // --- Funções de Renderização e Lógica ---
+    // --- Funções Auxiliares ---
     const formatarMoeda = (valor) => (valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
     function gerarTransacoesCompletas() {
         const transacoesFixas = appData.transacoes.filter(t => t.isFixo);
-        const transacoesNormais = appData.transacoes.filter(t => !t.isFixo);
         let transacoesProjetadas = [];
-
         transacoesFixas.forEach(t => {
             for (let i = 0; i < 12; i++) {
                 const dataProjetada = new Date(t.data + 'T00:00:00');
@@ -65,12 +64,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 parcelasGeradas.push({ id: `${compra.id}-${i}`, descricao: `${compra.descricao} (${i + 1}/${compra.numParcelas})`, valor: -(compra.valorTotal / compra.numParcelas), data: dataParcela.toISOString().split('T')[0], tipo: 'despesa', categoriaId: compra.categoriaId, isParcela: true, compraPaiId: compra.id });
             }
         });
-
-        const transacoesUnicas = [...transacoesNormais, ...transacoesProjetadas.filter(p => !transacoesNormais.some(n => n.descricao === p.descricao && new Date(n.data).getMonth() === new Date(p.data).getMonth()))];
-        return [...transacoesUnicas, ...parcelasGeradas];
+        return [...appData.transacoes, ...transacoesProjetadas, ...parcelasGeradas];
     }
     
-    function renderizarPaginaCompleta() {
+    // --- Funções de Renderização ---
+    function renderizarTudo() {
+        loadingIndicator.style.display = 'none';
+        dashboardContent.style.display = 'block';
+
         const todasTransacoes = gerarTransacoesCompletas();
         const hoje = new Date();
         const transacoesMes = todasTransacoes.filter(t => {
@@ -78,42 +79,45 @@ document.addEventListener('DOMContentLoaded', () => {
             return dataT.getMonth() === hoje.getMonth() && dataT.getFullYear() === hoje.getFullYear();
         });
 
-        // Selecionar elementos do DOM AQUI, depois que o HTML foi renderizado
-        const mesReceitasEl = document.getElementById('mes-receitas'), mesDespesasEl = document.getElementById('mes-despesas'), mesInvestimentosEl = document.getElementById('mes-investimentos'), mesSaldoEl = document.getElementById('mes-saldo');
-        const saldoDevedorEl = document.getElementById('saldo-devedor'), proximaFaturaEl = document.getElementById('proxima-fatura');
-        const budgetSummaryContainer = document.getElementById('budget-summary-container');
-        const listaTransacoesEl = document.getElementById('lista-transacoes');
-        
-        // Atualizar Visão do Mês
-        const receitas = transacoesMes.filter(t => t.tipo === 'receita').reduce((a, t) => a + t.valor, 0);
-        const despesas = transacoesMes.filter(t => t.tipo === 'despesa').reduce((a, t) => a + Math.abs(t.valor), 0);
-        const investimentos = transacoesMes.filter(t => t.tipo === 'investimento').reduce((a, t) => a + Math.abs(t.valor), 0);
-        mesReceitasEl.textContent = formatarMoeda(receitas);
-        mesDespesasEl.textContent = formatarMoeda(despesas);
-        mesInvestimentosEl.textContent = formatarMoeda(investimentos);
-        mesSaldoEl.textContent = formatarMoeda(receitas - despesas - investimentos);
-
-        // Atualizar KPIs Futuros e Orçamentos (implementar lógica completa)
-        saldoDevedorEl.textContent = formatarMoeda(0);
-        proximaFaturaEl.textContent = formatarMoeda(0);
-        budgetSummaryContainer.innerHTML = appData.orcamentos.length > 0 ? '' : '<p class="placeholder-text">Nenhum orçamento definido.</p>';
-        
-        // Atualizar Tabela
-        listaTransacoesEl.innerHTML = '';
-        transacoesMes.filter(t => !t.isProjecao || new Date(t.data).getMonth() === hoje.getMonth()).sort((a,b) => new Date(b.data) - new Date(a.data)).forEach(t => {
-            const categoria = appData.categorias.find(c => c.id === t.categoriaId)?.nome || 'Sem Categoria';
-            const item = document.createElement('tr');
-            item.innerHTML = `<td>${t.descricao} ${t.isFixo ? '📌' : ''}</td><td class="valor ${t.tipo}">${formatarMoeda(t.valor)}</td><td>${categoria}</td><td>${new Date(t.data + 'T00:00:00').toLocaleDateString('pt-BR')}</td><td><button class="delete-btn" data-id="${t.id}" data-is-parcela="${t.isParcela || false}">✖</button></td>`;
-            listaTransacoesEl.appendChild(item);
-        });
-
-        // Atualizar Gráficos
-        atualizarGraficos(todasTransacoes, transacoesMes);
-        
-        // Configurar Formulário
+        renderizarDashboard(transacoesMes, todasTransacoes);
+        renderizarTabela(transacoesMes);
+        renderizarGraficos(todasTransacoes, transacoesMes);
         configurarFormulario();
     }
     
+    function renderizarDashboard(transacoesMes, todasTransacoes) {
+        const receitas = transacoesMes.filter(t => t.tipo === 'receita').reduce((a, t) => a + t.valor, 0);
+        const despesas = transacoesMes.filter(t => t.tipo === 'despesa').reduce((a, t) => a + Math.abs(t.valor), 0);
+        const investimentos = transacoesMes.filter(t => t.tipo === 'investimento').reduce((a, t) => a + Math.abs(t.valor), 0);
+        document.getElementById('mes-receitas').textContent = formatarMoeda(receitas);
+        document.getElementById('mes-despesas').textContent = formatarMoeda(despesas);
+        document.getElementById('mes-investimentos').textContent = formatarMoeda(investimentos);
+        document.getElementById('mes-saldo').textContent = formatarMoeda(receitas - despesas - investimentos);
+    }
+
+    function renderizarTabela(transacoesParaExibir) {
+        const listaTransacoesEl = document.getElementById('lista-transacoes');
+        listaTransacoesEl.innerHTML = '';
+        transacoesParaExibir.sort((a,b) => new Date(b.data) - new Date(a.data)).forEach(t => {
+            const categoria = appData.categorias.find(c => c.id === t.categoriaId)?.nome || '';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${t.descricao} ${t.isFixo ? '📌' : ''}</td><td class="valor ${t.tipo}">${formatarMoeda(t.valor)}</td><td>${categoria}</td><td>${new Date(t.data+'T00:00:00').toLocaleDateString('pt-BR')}</td><td>...</td>`;
+            listaTransacoesEl.appendChild(tr);
+        });
+    }
+
+    function renderizarGraficos(todasTransacoes, transacoesMes) {
+        const pieChartCtx = document.getElementById('category-pie-chart')?.getContext('2d');
+        if (charts.pie) charts.pie.destroy();
+        if (pieChartCtx) {
+            const gastos = transacoesMes.filter(t => t.tipo === 'despesa').reduce((acc, t) => {
+                const nome = appData.categorias.find(c => c.id === t.categoriaId)?.nome || 'Outros';
+                acc[nome] = (acc[nome] || 0) + Math.abs(t.valor); return acc;
+            }, {});
+            charts.pie = new Chart(pieChartCtx, { type: 'doughnut', data: { labels: Object.keys(gastos), datasets: [{ data: Object.values(gastos), backgroundColor: ['#e35050', '#4a90e2', '#f5a623'] }] }, options: { responsive: true, maintainAspectRatio: false } });
+        }
+    }
+
     function configurarFormulario() {
         const form = document.getElementById('form-transacao'), dataInput = document.getElementById('data'), categoriaSelect = document.getElementById('categoria-select'), tipoRadios = document.querySelectorAll('input[name="tipo"]'), isFixoInput = document.getElementById('is-fixo'), isParceladaInput = document.getElementById('is-parcelada'), parceladoOptionContainer = document.getElementById('parcelado-option-container'), parcelasInputContainer = document.getElementById('parcelas-input-container');
         
@@ -136,36 +140,23 @@ document.addEventListener('DOMContentLoaded', () => {
         tipoRadios.forEach(radio => radio.addEventListener('change', atualizarVisibilidade));
         isParceladaInput.addEventListener('change', atualizarVisibilidade);
         
-        form.addEventListener('submit', async (e) => {
+        form.onsubmit = async (e) => {
             e.preventDefault();
-            const novaTransacao = {
-                id: Date.now(),
-                descricao: document.getElementById('descricao').value.trim(),
-                valor: parseFloat(document.getElementById('valor').value),
-                data: dataInput.value,
-                tipo: document.querySelector('input[name="tipo"]:checked').value,
-                categoriaId: parseInt(categoriaSelect.value),
-                isFixo: isFixoInput.checked
-            };
+            const novaTransacao = { id: Date.now(), descricao: document.getElementById('descricao').value.trim(), valor: parseFloat(document.getElementById('valor').value), data: dataInput.value, tipo: document.querySelector('input[name="tipo"]:checked').value, categoriaId: parseInt(categoriaSelect.value), isFixo: isFixoInput.checked };
             if (!novaTransacao.descricao || !novaTransacao.valor || !novaTransacao.data || !novaTransacao.categoriaId) { alert('Preencha todos os campos!'); return; }
             if (isParceladaInput.checked) { appData.comprasParceladas.push({ ...novaTransacao, valorTotal: novaTransacao.valor, numParcelas: parseInt(document.getElementById('parcelas').value) }); }
             else { appData.transacoes.push({ ...novaTransacao, valor: novaTransacao.tipo === 'receita' ? novaTransacao.valor : -novaTransacao.valor }); }
             await salvarDados();
             form.reset();
-            renderizarPaginaCompleta();
-        });
-
+            renderizarTudo();
+        };
         atualizarVisibilidade();
     }
     
-    function atualizarGraficos(todasTransacoes, transacoesMes) {
-        // ... (colar aqui sua lógica completa de renderização de gráficos)
-    }
-
-    // --- Ponto de Entrada ---
+    // --- Ponto de Entrada da Aplicação ---
     (async () => {
         if (await carregarDados()) {
-            renderizarPaginaCompleta();
+            renderizarTudo();
         }
     })();
 });
