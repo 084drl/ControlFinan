@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Controle Financeiro</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilos específicos para a página de login */
+        body { display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .login-card { max-width: 400px; width: 100%; }
+        #error-message { color: var(--danger-color); text-align: center; display: none; margin-top: 1rem; }
+        .recover-link { text-align: center; margin-top: 1rem; font-size: 0.8rem; color: var(--text-light-color); }
+    </style>
+</head>
+<body>
+    <div class="card login-card">
+        <h2>Acessar Painel</h2>
+        <form id="login-form">
+            <div class="form-control">
+                <label for="username">Usuário</label>
+                <input type="text" id="username" required value="admin">
+            </div>
+            <div class="form-control">
+                <label for="password">Senha</label>
+                <input type="password" id="password" required>
+            </div>
+            <p id="error-message">Usuário ou senha inválidos.</p>
+            <button type="submit" class="btn" style="margin-top: 1rem;">Entrar</button>
+            <p class="recover-link">(Função de recuperar senha requer um backend)</p>
+        </form>
+    </div>
+
+    <script src="js/auth.js"></script>
+</body>
+</html>

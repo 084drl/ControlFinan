@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script> if (sessionStorage.getItem('loggedIn') !== 'true') { window.location.href = 'login.html'; } </script>
+    <title>Orçamentos - Controle Financeiro</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="header-left">
+             <h1>Orçamentos</h1>
+             <nav>
+                <a href="index.html">Dashboard</a>
+                <a href="orcamentos.html" class="active">Orçamentos</a>
+                <a href="categorias.html">Categorias</a>
+             </nav>
+        </div>
+        <div class="header-right">
+            <button id="logout-btn" class="btn-logout">Sair</button>
+            <div class="theme-switcher">
+                <span>☀️</span>
+                <label class="switch"><input type="checkbox" id="theme-toggle"><span class="slider round"></span></label>
+                <span>🌙</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="card">
+            <h2>Definir Orçamentos Mensais</h2>
+            <p class="subtitle">Defina um limite de gastos para cada categoria de despesa. O sistema usará isso para monitorar sua saúde financeira no dashboard.</p>
+            <form id="form-orcamento">
+                <div class="form-grid">
+                    <div class="form-control">
+                        <label for="orcamento-categoria-select">Categoria de Despesa</label>
+                        <select id="orcamento-categoria-select" required></select>
+                    </div>
+                    <div class="form-control">
+                        <label for="orcamento-valor">Limite Mensal (R$)</label>
+                        <input type="number" id="orcamento-valor" step="0.01" placeholder="Ex: 500.00" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn">Salvar Orçamento</button>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>Orçamentos Atuais</h2>
+            <div id="lista-orcamentos">
+                <!-- Lista de orçamentos será inserida aqui -->
+            </div>
+        </section>
+    </main>
+    
+    <script src="js/auth.js"></script>
+    <script src="js/config.js"></script>
+</body>
+</html>

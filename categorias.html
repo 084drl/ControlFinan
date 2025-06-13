@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script> if (sessionStorage.getItem('loggedIn') !== 'true') { window.location.href = 'login.html'; } </script>
+    <title>Categorias - Controle Financeiro</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="header-left">
+             <h1>Categorias</h1>
+             <nav>
+                <a href="index.html">Dashboard</a>
+                <a href="orcamentos.html">Orçamentos</a>
+                <a href="categorias.html" class="active">Categorias</a>
+             </nav>
+        </div>
+        <div class="header-right">
+            <button id="logout-btn" class="btn-logout">Sair</button>
+            <div class="theme-switcher">
+                <span>☀️</span>
+                <label class="switch"><input type="checkbox" id="theme-toggle"><span class="slider round"></span></label>
+                <span>🌙</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="card">
+            <h2>Nova Categoria</h2>
+            <form id="form-categoria">
+                <div class="form-grid">
+                    <div class="form-control">
+                        <label for="categoria-nome">Nome da Categoria</label>
+                        <input type="text" id="categoria-nome" placeholder="Ex: Supermercado" required>
+                    </div>
+                    <div class="form-control">
+                        <label>Tipo de Categoria</label>
+                        <div class="radio-group" style="margin-top: 0.5rem;">
+                            <label><input type="radio" name="categoria-tipo" value="despesa" checked> Despesa</label>
+                            <label><input type="radio" name="categoria-tipo" value="receita"> Receita</label>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn">Adicionar Categoria</button>
+            </form>
+        </section>
+
+        <section class="dashboard-grid">
+            <div class="card">
+                <h2>Categorias de Despesa</h2>
+                <ul id="lista-despesas" class="category-list"></ul>
+            </div>
+            <div class="card">
+                <h2>Categorias de Receita</h2>
+                <ul id="lista-receitas" class="category-list"></ul>
+            </div>
+        </section>
+    </main>
+    
+    <script src="js/auth.js"></script>
+    <script src="js/config.js"></script>
+</body>
+</html>
