@@ -14,19 +14,11 @@ export default async (req, context) => {
   try {
     switch (req.method) {
       case "GET": {
-        let dados = await store.get(userId, { type: "json" });
-
-        // --- LÓGICA DE PERSISTÊNCIA CORRIGIDA ---
-        // Apenas retorna os dados que existem. Se não existir nada, retorna um objeto vazio.
-        // O front-end será responsável por lidar com o estado inicial.
-        if (!dados) {
-            return sendResponse(200, {}); // Retorna vazio, NÃO sobrescreve nada.
-        }
-        return sendResponse(200, dados);
+        const dados = await store.get(userId, { type: "json" });
+        return sendResponse(200, dados || {}); // Retorna os dados ou um objeto vazio se não existir
       }
       
       case "POST": {
-        // A ação de POST é a única que pode escrever/sobrescrever os dados.
         const novosDados = await req.json();
         if (!novosDados) {
           return sendResponse(400, { message: "Nenhum dado recebido para salvar." });
