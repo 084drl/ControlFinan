@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resetar Senha - Controle Financeiro</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .login-card { max-width: 400px; width: 100%; }
+    </style>
+</head>
+<body>
+    <div class="card login-card">
+        <h2>Criar Nova Senha</h2>
+        <form id="form-reset">
+            <div class="form-control">
+                <label for="new-password">Nova Senha (mínimo 6 caracteres)</label>
+                <input type="password" id="new-password" required>
+            </div>
+            <div class="form-control">
+                <label for="confirm-password">Confirme a Nova Senha</label>
+                <input type="password" id="confirm-password" required>
+            </div>
+            <button type="submit" class="btn">Salvar Nova Senha</button>
+        </form>
+        <p id="error-message" class="error-text"></p>
+        <a href="login.html" class="link-voltar">Voltar para o Login</a>
+    </div>
+    <script src="js/auth.js"></script>
+</body>
+</html>

@@ -6,11 +6,8 @@
     <title>Login - Controle Financeiro</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Estilos específicos para a página de login */
         body { display: flex; justify-content: center; align-items: center; height: 100vh; }
         .login-card { max-width: 400px; width: 100%; }
-        #error-message { color: var(--danger-color); text-align: center; display: none; margin-top: 1rem; }
-        .recover-link { text-align: center; margin-top: 1rem; font-size: 0.8rem; color: var(--text-light-color); }
     </style>
 </head>
 <body>
@@ -19,18 +16,17 @@
         <form id="login-form">
             <div class="form-control">
                 <label for="username">Usuário</label>
-                <input type="text" id="username" required value="admin">
+                <input type="text" id="username" value="admin" required>
             </div>
             <div class="form-control">
                 <label for="password">Senha</label>
                 <input type="password" id="password" required>
             </div>
-            <p id="error-message">Usuário ou senha inválidos.</p>
-            <button type="submit" class="btn" style="margin-top: 1rem;">Entrar</button>
-            <p class="recover-link">(Função de recuperar senha requer um backend)</p>
+            <p id="error-message" class="error-text"></p>
+            <button type="submit" class="btn">Entrar</button>
+            <a href="recuperar.html" class="link-voltar">Esqueci minha senha</a>
         </form>
     </div>
-
     <script src="js/auth.js"></script>
 </body>
 </html>

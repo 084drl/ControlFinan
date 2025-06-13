@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperar Senha - Controle Financeiro</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .login-card { max-width: 400px; width: 100%; }
+    </style>
+</head>
+<body>
+    <div class="card login-card">
+        <h2 id="form-title">Recuperar Senha</h2>
+        <!-- Etapa 1: Validar Usuário -->
+        <form id="form-step1">
+            <div class="form-control">
+                <label for="username">Digite seu usuário</label>
+                <input type="text" id="username" value="admin" required>
+            </div>
+            <button type="submit" class="btn">Continuar</button>
+        </form>
+        <!-- Etapa 2: Pergunta Secreta -->
+        <form id="form-step2" style="display: none;">
+            <div class="form-control">
+                <p id="pergunta-secreta" style="margin-bottom: 0.5rem; color: var(--text-light-color);"></p>
+                <label for="resposta">Sua Resposta</label>
+                <input type="text" id="resposta" required>
+            </div>
+            <button type="submit" class="btn">Verificar Resposta</button>
+        </form>
+        <p id="error-message" class="error-text"></p>
+        <a href="login.html" class="link-voltar">Voltar para o Login</a>
+    </div>
+    <script src="js/auth.js"></script>
+</body>
+</html>
