@@ -1,175 +1,101 @@
 document.addEventListener('DOMContentLoaded', () => {
-    
-    // --- ELEMENTOS DO DOM ---
-    // Tela de Login
-    const loginScreen = document.getElementById('login-screen');
-    const mainContent = document.getElementById('main-content');
-    const loginButton = document.getElementById('login-button');
-    const userInput = document.getElementById('usuario');
-    const passInput = document.getElementById('senha');
 
-    // Tela Principal
+    // --- ELEMENTOS DO DOM ---
+    const navLinks = document.querySelectorAll('.nav-link');
+    const pages = document.querySelectorAll('.page');
+
+    // Cards do Dashboard
+    const mesReceitas = document.getElementById('mes-receitas');
+    const mesDespesas = document.getElementById('mes-despesas');
+    const mesInvestimentos = document.getElementById('mes-investimentos');
+    const mesSaldo = document.getElementById('mes-saldo');
+    const saldoDevedor = document.getElementById('saldo-devedor');
+    const proxMes = document.getElementById('prox-mes');
+
+    // Modal
     const modal = document.getElementById("modal");
     const btnNew = document.getElementById("btnNew");
     const btnSalvar = document.getElementById("btnSalvar");
-    const closeModal = document.querySelector(".close-button");
+    const closeModalBtn = document.querySelector(".close-button");
+    const sDesc = document.getElementById("m-desc"), sAmount = document.getElementById("m-amount"),
+          sDate = document.getElementById("m-date"), sType = document.getElementById("m-type"),
+          sInstallments = document.getElementById("m-installments"), sBudgetCategory = document.getElementById("m-budget");
 
-    const sDesc = document.getElementById("m-desc");
-    const sAmount = document.getElementById("m-amount");
-    const sDate = document.getElementById("m-date");
-    const sType = document.getElementById("m-type");
-    const sInstallments = document.getElementById("m-installments");
-    const sInstallmentsGroup = document.getElementById("installments-group");
-    const sBudgetCategory = document.getElementById("m-budget");
+    // --- NAVEGAÇÃO SPA (Single Page Application) ---
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const pageId = link.getAttribute('data-page');
 
-    const incomesDisplay = document.getElementById("incomes");
-    const expensesDisplay = document.getElementById("expenses");
-    const investmentsDisplay = document.getElementById("investments");
-    const totalDisplay = document.getElementById("total");
-    const tbody = document.querySelector("tbody");
+            // Troca a classe .active nos links
+            navLinks.forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
 
-    const installmentsProjectionDiv = document.getElementById("installments-projection");
-    const budgetsOverviewDiv = document.getElementById("budgets-overview");
-
-    // --- LÓGICA DE LOGIN (CORRIGIDA E MAIS ROBUSTA) ---
-    loginButton.addEventListener('click', () => {
-        // Usamos .trim() para remover espaços em branco acidentais
-        const userValue = userInput.value.trim();
-        const passValue = passInput.value.trim();
-
-        // Linhas de depuração para ver no console (F12) o que está sendo comparado
-        console.log("Tentativa de login com:");
-        console.log("Usuário:", `'${userValue}'`);
-        console.log("Senha:", `'${passValue}'`);
-        
-        // Login fixo para demonstração
-        if (userValue === 'admin' && passValue === '1234') {
-            console.log("Login BEM-SUCEDIDO!");
-            loginScreen.style.display = 'none';
-            mainContent.style.display = 'block';
-            loadAll(); // Carrega os dados do dashboard APÓS o login
-        } else {
-            console.log("Login FALHOU. Verifique os valores acima.");
-            alert('Usuário ou senha incorretos!');
-        }
+            // Mostra a página correta e esconde as outras
+            pages.forEach(p => p.classList.remove('active'));
+            document.getElementById(`${pageId}-page`).classList.add('active');
+        });
     });
 
-    // --- BANCO DE DADOS E ORÇAMENTOS ---
+    // --- LÓGICA FINANCEIRA ---
     let items = [];
-    const budgets = [
-        { name: 'Alimentação', limit: 1000 },
-        { name: 'Transporte', limit: 300 },
-        { name: 'Moradia', limit: 1500 },
-        { name: 'Lazer', limit: 400 },
-        { name: 'Saúde', limit: 500 },
-        { name: 'Diarista', limit: 400 }
-    ];
+    const getItensBD = () => JSON.parse(localStorage.getItem('db_items_v2')) ?? [];
+    const setItensBD = () => localStorage.setItem('db_items_v2', JSON.stringify(items));
 
-    const getItensBD = () => JSON.parse(localStorage.getItem('db_items')) ?? [];
-    const setItensBD = () => localStorage.setItem('db_items', JSON.stringify(items));
-
-    // --- FUNÇÕES DA APLICAÇÃO PRINCIPAL ---
     function loadAll() {
         items = getItensBD();
         updateDashboard();
-        renderTransactions();
-        updateInstallmentProjection();
-        updateBudgets();
-        populateBudgetOptions();
+        // Futuramente, chamaremos as funções de gráfico e outras páginas aqui
     }
 
     function updateDashboard() {
-        const incomes = items.filter(item => item.type === 'Entrada').reduce((acc, item) => acc + item.amount, 0);
-        const expenses = items.filter(item => item.type === 'Saída').reduce((acc, item) => acc + item.amount, 0);
-        const investments = items.filter(item => item.type === 'Investimento').reduce((acc, item) => acc + item.amount, 0);
-        const total = incomes - expenses;
+        const hoje = new Date();
+        const mesAtual = hoje.getMonth();
+        const anoAtual = hoje.getFullYear();
 
-        incomesDisplay.textContent = formatCurrency(incomes);
-        expensesDisplay.textContent = formatCurrency(expenses);
-        investmentsDisplay.textContent = formatCurrency(investments);
-        totalDisplay.textContent = formatCurrency(total);
-        totalDisplay.parentElement.classList.toggle('expense-value', total < 0);
-        totalDisplay.parentElement.classList.toggle('income-value', total > 0);
-    }
-
-    function renderTransactions() {
-        tbody.innerHTML = '';
-        const sortedItems = [...items].sort((a, b) => new Date(b.date) - new Date(a.date));
-        sortedItems.forEach(item => {
-            const originalIndex = items.findIndex(originalItem => originalItem.id === item.id);
-            tbody.innerHTML += `
-                <tr>
-                    <td>${formatDate(item.date)}</td>
-                    <td>${item.desc}</td>
-                    <td>${formatCurrency(item.amount)}</td>
-                    <td class="columnType">${item.type}</td>
-                    <td class="columnAction">
-                        <button onclick="window.deleteItem(${originalIndex})"><i class='fa-solid fa-trash'></i></button>
-                    </td>
-                </tr>
-            `;
+        // 1. Visão Geral do Mês
+        const transacoesMes = items.filter(item => {
+            const dataItem = new Date(item.date + 'T00:00:00');
+            return dataItem.getMonth() === mesAtual && dataItem.getFullYear() === anoAtual;
         });
-    }
 
-    function updateInstallmentProjection() {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const futureInstallments = items.filter(item => item.type === 'Saída' && new Date(item.date) >= today && item.installmentInfo);
-        if (futureInstallments.length === 0) {
-            installmentsProjectionDiv.innerHTML = '<p>Nenhuma despesa parcelada futura.</p>';
-            return;
-        }
-        const projectionByMonth = {};
-        futureInstallments.forEach(item => {
-            const monthYear = new Date(item.date).toLocaleString('pt-br', { month: 'long', year: 'numeric' });
-            if (!projectionByMonth[monthYear]) { projectionByMonth[monthYear] = 0; }
-            projectionByMonth[monthYear] += item.amount;
-        });
-        let html = '<ul>';
-        for (const month in projectionByMonth) {
-            html += `<li><strong>${capitalize(month)}:</strong> ${formatCurrency(projectionByMonth[month])}</li>`;
-        }
-        html += '</ul>';
-        installmentsProjectionDiv.innerHTML = html;
-    }
+        const receitas = transacoesMes.filter(i => i.type === 'Entrada').reduce((acc, i) => acc + i.amount, 0);
+        const despesas = transacoesMes.filter(i => i.type === 'Saída').reduce((acc, i) => acc + i.amount, 0);
+        const investimentos = transacoesMes.filter(i => i.type === 'Investimento').reduce((acc, i) => acc + i.amount, 0);
+        const saldo = receitas - despesas;
+        
+        mesReceitas.textContent = formatCurrency(receitas);
+        mesDespesas.textContent = formatCurrency(despesas);
+        mesInvestimentos.textContent = formatCurrency(investimentos);
+        mesSaldo.textContent = formatCurrency(saldo);
+        mesSaldo.className = saldo < 0 ? 'valor-negativo' : 'valor-positivo';
 
-    function updateBudgets() {
-        budgetsOverviewDiv.innerHTML = '';
-        if(budgets.length === 0) {
-            budgetsOverviewDiv.innerHTML = '<p>Nenhum orçamento configurado.</p>';
-            return;
-        }
-        const currentMonth = new Date().getMonth();
-        const currentYear = new Date().getFullYear();
-        budgets.forEach(budget => {
-            const spent = items.filter(item => {
-                const itemDate = new Date(item.date);
-                return item.budgetCategory === budget.name && itemDate.getMonth() === currentMonth && itemDate.getFullYear() === currentYear && item.type === 'Saída';
-            }).reduce((acc, item) => acc + item.amount, 0);
-            const percentage = (spent / budget.limit) * 100;
-            budgetsOverviewDiv.innerHTML += `
-                <div class="budget-item">
-                    <p><span><strong>${budget.name}</strong></span><span>${formatCurrency(spent)} / ${formatCurrency(budget.limit)}</span></p>
-                    <div class="progress-bar">
-                        <div class="progress" style="width: ${Math.min(percentage, 100)}%; background-color: ${percentage > 100 ? '#dc3545' : '#007bff'};">
-                            ${percentage.toFixed(0)}%
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-    }
+        // 2. Planejamento Futuro
+        const transacoesFuturas = items.filter(item => new Date(item.date + 'T00:00:00') > hoje);
+        
+        const devedor = transacoesFuturas.filter(i => i.type === 'Saída').reduce((acc, i) => acc + i.amount, 0);
+        saldoDevedor.textContent = formatCurrency(devedor);
 
-    window.deleteItem = function(index) {
-        items.splice(index, 1);
-        setItensBD();
-        loadAll();
+        const proxMesDate = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+        const mesSeguinte = proxMesDate.getMonth();
+        const anoSeguinte = proxMesDate.getFullYear();
+        
+        const compromisso = items.filter(item => {
+            const dataItem = new Date(item.date + 'T00:00:00');
+            return dataItem.getMonth() === mesSeguinte && dataItem.getFullYear() === anoSeguinte && i.type === 'Saída';
+        }).reduce((acc, i) => acc + i.amount, 0);
+        proxMes.textContent = formatCurrency(compromisso);
     }
-
+    
+    // --- LÓGICA DO MODAL ---
+    btnNew.onclick = () => { modal.style.display = "flex"; };
+    closeModalBtn.onclick = () => { modal.style.display = "none"; };
+    
     btnSalvar.onclick = (e) => {
         e.preventDefault();
+        // (Lógica de salvar transação, igual à versão anterior)
         if (sDesc.value === '' || sAmount.value === '' || sDate.value === '') {
-            return alert("Por favor, preencha todos os campos obrigatórios (Descrição, Valor e Data).");
+            return alert("Preencha Descrição, Valor e Data.");
         }
         const amount = parseFloat(sAmount.value);
         const installmentsCount = parseInt(sInstallments.value, 10);
@@ -184,42 +110,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 items.push({
                     id: Date.now() + i, desc: `${sDesc.value} (${i}/${installmentsCount})`, amount: installmentAmount,
                     type: sType.value, date: installmentDate.toISOString().split('T')[0],
-                    budgetCategory: sBudgetCategory.value, installmentInfo: { current: i, total: installmentsCount }
+                    category: sBudgetCategory.value, installmentInfo: { current: i, total: installmentsCount }
                 });
             }
         } else {
             items.push({
                 id: Date.now(), desc: sDesc.value, amount: amount, type: sType.value,
-                date: sDate.value, budgetCategory: sBudgetCategory.value
+                date: sDate.value, category: sBudgetCategory.value
             });
         }
         setItensBD();
         modal.style.display = "none";
-        clearModalFields();
+        sDesc.value = ''; sAmount.value = '';
         loadAll();
     };
 
-    function formatCurrency(value) { return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
-    function formatDate(dateString) { const [year, month, day] = dateString.split('-'); return `${day}/${month}/${year}`; }
-    function capitalize(string) { return string.charAt(0).toUpperCase() + string.slice(1); }
-
-    function clearModalFields() {
-        sDesc.value = ''; sAmount.value = '';
-        sDate.value = new Date().toISOString().split('T')[0];
-        sType.value = 'Saída'; sInstallments.value = '1';
-        sBudgetCategory.value = 'Nenhum';
-        sInstallmentsGroup.style.display = 'block';
+    function formatCurrency(value) {
+        return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
 
-    function populateBudgetOptions() {
-        sBudgetCategory.innerHTML = '<option value="Nenhum">Nenhum</option>';
-        budgets.forEach(budget => {
-            sBudgetCategory.innerHTML += `<option value="${budget.name}">${budget.name}</option>`;
-        });
-    }
-
-    btnNew.onclick = () => { clearModalFields(); modal.style.display = "flex"; };
-    closeModal.onclick = () => { modal.style.display = "none"; };
-    window.onclick = (event) => { if (event.target == modal) { modal.style.display = "none"; } };
-    sType.onchange = () => { sInstallmentsGroup.style.display = sType.value === 'Saída' ? 'block' : 'none'; };
+    // --- INICIALIZAÇÃO ---
+    loadAll();
 });
