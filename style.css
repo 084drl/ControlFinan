@@ -1,23 +1,127 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap');
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: Arial, Helvetica, sans-serif;
 }
 
 body {
+    font-family: 'Noto Sans', sans-serif;
     background-color: #f2f2f2;
 }
 
+/* ======================= Estilos da Tela de Login (Originais) ======================= */
+.main-login {
+    width: 100vw;
+    height: 100vh;
+    background: #201b2c;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.left-login {
+    width: 50vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.left-login > h1 {
+    font-size: 3vw;
+    color: #77ffc0;
+}
+
+.left-login-image {
+    width: 35vw;
+}
+
+.right-login {
+    width: 50vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card-login {
+    width: 60%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    padding: 30px 35px;
+    background: #2f2841;
+    border-radius: 20px;
+    box-shadow: 0px 10px 40px #00000056;
+}
+
+.card-login > h1 {
+    color: #00ff88;
+    font-weight: 800;
+    margin: 0;
+}
+
+.textfield {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    margin: 10px 0px;
+}
+
+.textfield > input {
+    width: 100%;
+    border: none;
+    border-radius: 10px;
+    padding: 15px;
+    background: #514869;
+    color: #f0ffffde;
+    font-size: 12pt;
+    box-shadow: 0px 10px 40px #00000056;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.textfield > label {
+    color: #f0ffffde;
+    margin-bottom: 10px;
+}
+
+.textfield > input::placeholder {
+    color: #f0ffff94;
+}
+
+.btn-login {
+    width: 100%;
+    padding: 16px 0px;
+    margin: 25px;
+    border: none;
+    border-radius: 8px;
+    outline: none;
+    text-transform: uppercase;
+    font-weight: 800;
+    letter-spacing: 3px;
+    color: #2b134b;
+    background: #00ff88;
+    cursor: pointer;
+    box-shadow: 0px 10px 40px -12px #00ff8052;
+}
+
+/* ======================= Estilos do Dashboard (Mantidos e Adaptados) ======================= */
 header {
-    background-color: #008080;
+    background-color: #008080; /* Cor original do seu primeiro projeto */
     color: white;
     padding: 1rem;
     text-align: center;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-main {
+.main-dashboard {
     max-width: 1000px;
     margin: 20px auto;
     padding: 20px;
@@ -41,31 +145,15 @@ main {
     border: 1px solid #ddd;
 }
 
-.resume-item p {
-    font-size: 1rem;
-    color: #555;
-    margin-bottom: 10px;
-}
-
-.resume-item span {
-    font-size: 1.8rem;
-    font-weight: bold;
-}
-
+.resume-item p { font-size: 1rem; color: #555; margin-bottom: 10px; }
+.resume-item span { font-size: 1.8rem; font-weight: bold; }
 .income-value { color: #28a745; }
 .expense-value { color: #dc3545; }
 .investment-value { color: #007bff; }
 .total-value { color: #333; }
+.total-item { background-color: #e9ecef; }
 
-.total-item {
-    background-color: #e9ecef;
-}
-
-.button-container {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
+.button-container { text-align: center; margin-bottom: 20px; }
 #btnNew {
     padding: 12px 25px;
     border-radius: 5px;
@@ -77,187 +165,30 @@ main {
     font-weight: bold;
     transition: background-color 0.3s ease;
 }
+#btnNew:hover { background-color: #006666; }
 
-#btnNew:hover {
-    background-color: #006666;
-}
+.div-table { overflow-x: auto; margin-top: 20px; }
+table { width: 100%; border-collapse: collapse; }
+thead th { background-color: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; color: #495057; }
+tbody td { padding: 12px; border-bottom: 1px solid #e9ecef; }
+tbody tr:hover { background-color: #f1f1f1; }
+.columnType, .columnAction { text-align: center; }
+.columnAction button { background: none; border: none; cursor: pointer; color: #dc3545; font-size: 1.2rem; }
 
-.div-table {
-    overflow-x: auto;
-    margin-top: 20px;
-}
+/* ======================= Estilos do Modal e Novas Seções (Adicionados) ======================= */
+.modal-container { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
+.modal-content { background-color: white; padding: 30px; border-radius: 8px; width: 90%; max-width: 500px; position: relative; }
+.close-button { position: absolute; top: 10px; right: 15px; font-size: 28px; font-weight: bold; cursor: pointer; color: #aaa; }
+.modal-content h2 { margin-bottom: 20px; text-align: center; color: #333; }
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 5px; color: #555; }
+.form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+#btnSalvar { width: 100%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; font-weight: bold; }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-thead th {
-    background-color: #f8f9fa;
-    padding: 12px;
-    text-align: left;
-    border-bottom: 2px solid #dee2e6;
-    color: #495057;
-}
-
-tbody td {
-    padding: 12px;
-    border-bottom: 1px solid #e9ecef;
-}
-
-tbody tr:hover {
-    background-color: #f1f1f1;
-}
-
-.columnType { text-align: center; }
-.columnAction { text-align: center; }
-
-.columnAction button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #dc3545;
-    font-size: 1.2rem;
-}
-
-.columnAction button:hover {
-    color: #a71d2a;
-}
-
-/* Modal */
-.modal-container {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.5);
-    justify-content: center;
-    align-items: center;
-}
-
-.modal-content {
-    background-color: white;
-    padding: 30px;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 500px;
-    position: relative;
-    animation: slide-down 0.3s ease-out;
-}
-
-@keyframes slide-down {
-    from {
-        transform: translateY(-50px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-.close-button {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-    color: #aaa;
-}
-
-.close-button:hover {
-    color: #000;
-}
-
-.modal-content h2 {
-    margin-bottom: 20px;
-    text-align: center;
-    color: #333;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    color: #555;
-}
-
-.form-group input, .form-group select {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
-
-#btnSalvar {
-    width: 100%;
-    padding: 12px;
-    background-color: #28a745;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: bold;
-    transition: background-color 0.3s ease;
-}
-
-#btnSalvar:hover {
-    background-color: #218838;
-}
-
-/* Novas Seções */
-.projections-container, .budgets-container {
-    margin-top: 40px;
-}
-
-.projections-container h2, .budgets-container h2 {
-    color: #008080;
-    border-bottom: 2px solid #e0e0e0;
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-}
-
-.info-section {
-    background-color: #f9f9f9;
-    padding: 20px;
-    border-radius: 8px;
-    border: 1px solid #eee;
-}
-
-/* Orçamentos */
-.budget-item {
-    margin-bottom: 15px;
-}
-
-.budget-item p {
-    margin-bottom: 5px;
-    display: flex;
-    justify-content: space-between;
-}
-
-.progress-bar {
-    width: 100%;
-    background-color: #e0e0e0;
-    border-radius: 10px;
-    height: 20px;
-    overflow: hidden;
-}
-
-.progress {
-    height: 100%;
-    background-color: #007bff;
-    border-radius: 10px;
-    text-align: center;
-    color: white;
-    font-weight: bold;
-    line-height: 20px;
-    transition: width 0.5s ease-in-out;
-}
+.projections-container, .budgets-container { margin-top: 40px; }
+.projections-container h2, .budgets-container h2 { color: #008080; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; margin-bottom: 15px; }
+.info-section { background-color: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #eee; }
+.budget-item { margin-bottom: 15px; }
+.budget-item p { margin-bottom: 5px; display: flex; justify-content: space-between; }
+.progress-bar { width: 100%; background-color: #e0e0e0; border-radius: 10px; height: 20px; overflow: hidden; }
+.progress { height: 100%; background-color: #007bff; border-radius: 10px; text-align: center; color: white; font-weight: bold; line-height: 20px; transition: width 0.5s ease-in-out; }
