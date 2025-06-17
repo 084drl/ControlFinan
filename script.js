@@ -31,14 +31,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const installmentsProjectionDiv = document.getElementById("installments-projection");
     const budgetsOverviewDiv = document.getElementById("budgets-overview");
 
-    // --- LÓGICA DE LOGIN ---
+    // --- LÓGICA DE LOGIN (CORRIGIDA E MAIS ROBUSTA) ---
     loginButton.addEventListener('click', () => {
+        // Usamos .trim() para remover espaços em branco acidentais
+        const userValue = userInput.value.trim();
+        const passValue = passInput.value.trim();
+
+        // Linhas de depuração para ver no console (F12) o que está sendo comparado
+        console.log("Tentativa de login com:");
+        console.log("Usuário:", `'${userValue}'`);
+        console.log("Senha:", `'${passValue}'`);
+        
         // Login fixo para demonstração
-        if (userInput.value === 'admin' && passInput.value === '1234') {
+        if (userValue === 'admin' && passValue === '1234') {
+            console.log("Login BEM-SUCEDIDO!");
             loginScreen.style.display = 'none';
             mainContent.style.display = 'block';
             loadAll(); // Carrega os dados do dashboard APÓS o login
         } else {
+            console.log("Login FALHOU. Verifique os valores acima.");
             alert('Usuário ou senha incorretos!');
         }
     });
