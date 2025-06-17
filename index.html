@@ -6,7 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-    <title>Controle Financeiro</title>
+    <title>Dashboard Financeiro Estratégico</title>
+    <!-- Biblioteca de Gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body data-theme="dark">
 
@@ -14,7 +16,7 @@
         <label class="theme-switch" for="checkbox"><input type="checkbox" id="checkbox" /><div class="slider round"></div></label>
     </div>
 
-    <!-- TELA DE LOGIN -->
+    <!-- TELA DE LOGIN (Mantida) -->
     <div class="main-login" id="login-screen">
         <div class="left-login"><h1>Faça o login<br>E comece a usar</h1><img src="img/img.svg" class="left-login-image" alt="Finance Animation"></div>
         <div class="right-login"><div class="card-login"><h1>LOGIN</h1><div class="textfield"><label for="usuario">Usuário</label><input type="text" id="usuario" placeholder="Usuário"></div><div class="textfield"><label for="senha">Senha</label><input type="password" id="senha" placeholder="Senha"></div><button class="btn-login" id="login-button">Login</button></div></div>
@@ -22,7 +24,7 @@
 
     <!-- CONTEÚDO PRINCIPAL -->
     <div id="main-content" style="display: none;">
-        <header>
+        <header class="app-header">
             <nav class="main-nav">
                 <a href="#" class="nav-link active" data-page="dashboard">Dashboard</a>
                 <a href="#" class="nav-link" data-page="recorrencias">Recorrências</a>
@@ -31,40 +33,54 @@
             </nav>
         </header>
 
-        <main class="main-dashboard">
+        <main class="app-main">
+            <!-- PÁGINA DASHBOARD ESTRATÉGICO -->
             <div id="dashboard-page" class="page active">
-                <div class="dashboard-row">
-                    <div class="resume-container-main">
-                        <div class="resume-item"><p>Receitas do Mês</p><span id="total-receitas" class="income-value">R$ 0,00</span></div>
-                        <div class="resume-item"><p>Despesas do Mês</p><span id="total-despesas" class="expense-value">R$ 0,00</span></div>
-                        <div class="resume-item"><p>Investimentos do Mês</p><span id="total-investimentos" class="investment-value">R$ 0,00</span></div>
-                        <div class="resume-item total-item"><p>Saldo do Mês</p><span id="saldo-geral" class="total-value">R$ 0,00</span></div>
+                <div class="dashboard-grid">
+                    <!-- Card de Visão do Mês -->
+                    <div class="card">
+                        <div class="card-header">Visão do Mês Atual</div>
+                        <div class="card-content-grid">
+                            <div class="metric-item"><p>Receitas</p><span id="mes-receitas" class="valor-positivo">R$ 0,00</span></div>
+                            <div class="metric-item"><p>Despesas</p><span id="mes-despesas" class="valor-negativo">R$ 0,00</span></div>
+                            <div class="metric-item"><p>Investimentos</p><span id="mes-investimentos" class="valor-neutro">R$ 0,00</span></div>
+                            <div class="metric-item"><p>Saldo do Mês</p><span id="mes-saldo">R$ 0,00</span></div>
+                        </div>
                     </div>
-                    <div class="planning-container">
-                        <h4>Planejamento Futuro</h4>
-                        <div class="planning-item"><p>Total a Pagar (Futuro)</p><span id="lancamentos-futuros">R$ 0,00</span></div>
-                        <div class="planning-item"><p>Última parcela em:</p><span id="ultima-parcela">-</span></div>
+                    <!-- Card de Planejamento Futuro -->
+                    <div class="card">
+                        <div class="card-header">Planejamento Futuro</div>
+                         <div class="card-content-grid">
+                            <div class="metric-item"><p>Saldo Devedor Total</p><span id="saldo-devedor-total" class="valor-negativo">R$ 0,00</span></div>
+                            <div class="metric-item"><p>Compromisso Próx. Mês</p><span id="proximo-mes-compromisso" class="valor-neutro">R$ 0,00</span></div>
+                        </div>
+                    </div>
+                    <!-- Card do Top 5 Gastos -->
+                    <div class="card">
+                        <div class="card-header">Top 5 Gastos do Mês</div>
+                        <div class="chart-container">
+                            <canvas id="gastosCategoriaChart"></canvas>
+                        </div>
+                    </div>
+                     <!-- Card do Fluxo de Caixa -->
+                    <div class="card card-large">
+                        <div class="card-header">Projeção de Fluxo de Caixa (12 Meses)</div>
+                        <div class="chart-container">
+                            <canvas id="fluxoCaixaChart"></canvas>
+                        </div>
                     </div>
                 </div>
-                <div class="transactions-section">
-                    <h3>Lançamentos do Mês Atual</h3>
-                    <div class="button-container"><button id="btnNew">Adicionar Lançamento Avulso</button></div>
-                    <div class="div-table"><table><thead><tr><th>Data</th><th>Descrição</th><th>Valor</th><th class="columnType">Tipo</th><th class="columnAction">Ação</th></tr></thead><tbody></tbody></table></div>
-                </div>
-                <div class="dashboard-row">
-                    <div class="projections-container"><h2>Projeção de Parcelas por Mês</h2><div id="installments-projection" class="info-section">...</div></div>
-                    <div class="budgets-container"><h2>Orçamentos do Mês</h2><div id="budgets-overview" class="info-section">...</div></div>
-                </div>
+                <button id="btnNew" class="btn-adicionar-flutuante" title="Adicionar Lançamento Avulso"><i class="fa-solid fa-plus"></i></button>
             </div>
-            
-            <!-- Outras Páginas (Recorrências, Categorias, Orçamentos) permanecem iguais -->
+
+            <!-- Páginas de Gerenciamento (Estrutura mantida) -->
             <div id="recorrencias-page" class="page">...</div>
             <div id="categorias-page" class="page">...</div>
             <div id="orcamentos-page" class="page">...</div>
         </main>
     </div>
 
-    <!-- MODAL DE LANÇAMENTO (permanece igual) -->
+    <!-- MODAL DE LANÇAMENTO (Estrutura mantida) -->
     <div class="modal-container" id="modal">...</div>
     
     <script src="script.js"></script>
