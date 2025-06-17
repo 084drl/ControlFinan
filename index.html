@@ -1,110 +1,95 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>if (!sessionStorage.getItem('loggedIn')) { window.location.href = 'login.html'; }</script>
     <title>Dashboard Financeiro</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <!-- Biblioteca de Gráficos (para a próxima etapa) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-
-    <div class="app-container">
-        <header class="app-header">
-            <div class="logo">Dashboard</div>
-            <nav class="main-nav">
-                <a href="#" class="nav-link active" data-page="dashboard">Dashboard</a>
-                <a href="#" class="nav-link" data-page="orcamentos">Orçamentos</a>
-                <a href="#" class="nav-link" data-page="categorias">Categorias</a>
-            </nav>
-            <button id="btn-logout" class="btn-sair">Sair</button>
-        </header>
-
-        <main class="app-main">
-            <!-- PÁGINA DO DASHBOARD -->
-            <div id="dashboard-page" class="page active">
-                <div class="dashboard-grid">
-                    <div class="card">
-                        <h3>Visão Geral do Mês</h3>
-                        <div class="card-summary">
-                            <div><p>Receitas</p><span id="mes-receitas" class="valor-positivo">R$ 0,00</span></div>
-                            <div><p>Despesas</p><span id="mes-despesas" class="valor-negativo">R$ 0,00</span></div>
-                            <div><p>Investimentos</p><span id="mes-investimentos" class="valor-neutro">R$ 0,00</span></div>
-                            <div><p>Saldo do Mês</p><span id="mes-saldo">R$ 0,00</span></div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <h3>Planejamento Futuro</h3>
-                        <div class="card-future">
-                             <div><p>Saldo Devedor Total</p><span id="saldo-devedor" class="valor-negativo">R$ 0,00</span></div>
-                             <div><p>Compromisso Próx. Mês</p><span id="prox-mes" class="valor-neutro">R$ 0,00</span></div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <h3>Resumo dos Orçamentos</h3>
-                        <div id="resumo-orcamentos">Carregando...</div>
-                    </div>
-                    <div class="card card-large">
-                        <h3>Projeção de Fluxo de Caixa (12 Meses)</h3>
-                        <div class="chart-container">
-                            <!-- Gráfico será inserido aqui na Etapa 2 -->
-                            <p class="placeholder-text">Gráfico em breve</p>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <h3>Gastos por Categoria (Mês Atual)</h3>
-                        <div class="chart-container">
-                            <!-- Gráfico será inserido aqui na Etapa 2 -->
-                            <p class="placeholder-text">Gráfico em breve</p>
-                        </div>
-                    </div>
-                </div>
-                 <button id="btnNew" class="btn-adicionar-flutuante"><i class="fa-solid fa-plus"></i></button>
-            </div>
-
-            <!-- PÁGINA DE ORÇAMENTOS (Placeholder) -->
-            <div id="orcamentos-page" class="page" style="display: none;">
-                <h1>Gerenciar Orçamentos</h1>
-                <p>Esta página será construída na Etapa 3.</p>
-            </div>
-
-            <!-- PÁGINA DE CATEGORIAS (Placeholder) -->
-            <div id="categorias-page" class="page" style="display: none;">
-                <h1>Gerenciar Categorias</h1>
-                <p>Esta página será construída na Etapa 3.</p>
-            </div>
-        </main>
-    </div>
-
-    <!-- MODAL PARA ADICIONAR TRANSAÇÃO (Restilizado) -->
-    <div class="modal-container" id="modal">
-        <div class="modal-content">
-            <span class="close-button">×</span>
-            <h2>Novo Lançamento</h2>
-            <div class="form-group"><label for="m-desc">Descrição</label><input id="m-desc" type="text" required></div>
-            <div class="form-group"><label for="m-amount">Valor</label><input id="m-amount" type="number" required></div>
-            <div class="form-group"><label for="m-date">Data</label><input id="m-date" type="date" required></div>
-            <div class="form-group">
-                <label for="m-type">Tipo</label>
-                <select id="m-type">
-                    <option value="Entrada">Receita</option>
-                    <option value="Saída" selected>Despesa</option>
-                    <option value="Investimento">Investimento</option>
-                </select>
-            </div>
-            <div class="form-group" id="installments-group">
-                <label for="m-installments">Nº de Parcelas</label>
-                <input id="m-installments" type="number" value="1" min="1">
-            </div>
-            <div class="form-group">
-                <label for="m-budget">Categoria</label>
-                <select id="m-budget"><option value="Nenhum">Nenhuma</option></select>
-            </div>
-            <button id="btnSalvar">SALVAR</button>
+    <header>
+        <div class="header-left">
+             <h1>Controle Financeiro</h1>
+             <nav>
+                <a href="index.html" class="active">Dashboard</a>
+                <a href="orcamentos.html">Orçamentos</a>
+                <a href="categorias.html">Categorias</a>
+             </nav>
         </div>
-    </div>
+        <div class="header-right">
+            <button id="logout-btn" class="btn-logout">Sair</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="strategic-grid">
+            <div class="card grid-col-span-2">
+                <h2>Visão Geral do Mês</h2>
+                <div class="main-summary">
+                    <div><span>Receitas</span><strong id="mes-receitas" class="label-receita">R$ 0,00</strong></div>
+                    <div><span>Despesas</span><strong id="mes-despesas" class="label-despesa">R$ 0,00</strong></div>
+                    <div><span>Investimentos</span><strong id="mes-investimentos" class="label-investimento">R$ 0,00</strong></div>
+                    <div class="balance"><span>Saldo do Mês</span><strong id="mes-saldo">R$ 0,00</strong></div>
+                </div>
+            </div>
+            <div class="card">
+                <h2>Planejamento Futuro</h2>
+                <div class="kpi-grid">
+                    <div class="kpi-card"><h4>Saldo Devedor Total</h4><p id="saldo-devedor">R$ 0,00</p></div>
+                    <div class="kpi-card"><h4>Compromisso Próx. Mês</h4><p id="proxima-fatura">R$ 0,00</p></div>
+                </div>
+            </div>
+            <div class="card">
+                <h2>Resumo dos Orçamentos</h2>
+                <div id="budget-summary-container" class="budget-summary"><p class="placeholder-text">Carregando...</p></div>
+            </div>
+            <div class="card chart-container grid-col-span-2">
+                <h3>Projeção de Fluxo de Caixa (12 Meses)</h3>
+                <canvas id="projection-chart"></canvas>
+            </div>
+            <div class="card chart-container">
+                <h3>Gastos por Categoria (Mês Atual)</h3>
+                <canvas id="category-pie-chart"></canvas>
+            </div>
+        </section>
+        
+        <section class="card">
+            <h2>Adicionar Nova Transação</h2>
+            <form id="form-transacao">
+                <div class="form-grid">
+                    <div class="form-control" style="grid-column: 1 / 3;"><label for="descricao">Descrição</label><input type="text" id="descricao" required></div>
+                    <div class="form-control"><label for="valor">Valor</label><input type="number" id="valor" step="0.01" required></div>
+                    <div class="form-control"><label for="data">Data</label><input type="date" id="data" required></div>
+                    <div class="form-control" style="grid-column: 1 / 3;"><label for="categoria-select">Categoria</label><select id="categoria-select" required><option>Carregando...</option></select></div>
+                </div>
+                <div class="form-control radio-group">
+                    <label><input type="radio" name="tipo" value="receita" checked> Receita</label>
+                    <label><input type="radio" name="tipo" value="despesa"> Despesa</label>
+                    <label><input type="radio" name="tipo" value="investimento"> Investimento</label>
+                </div>
+                <div class="checkbox-options">
+                    <div class="form-control checkbox-group"><label><input type="checkbox" id="is-fixo"> Marcar como Fixo (recorrente)</label></div>
+                    <div class="form-control checkbox-group" id="parcelado-option-container" style="display: none;"><label><input type="checkbox" id="is-parcelada"> É Compra Parcelada?</label></div>
+                </div>
+                <div class="form-control" id="parcelas-input-container" style="display: none;">
+                    <label for="parcelas">Nº de Parcelas</label><input type="number" id="parcelas" min="2" value="2">
+                </div>
+                <button type="submit" class="btn">Adicionar Transação</button>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>Histórico de Transações (Mês Atual)</h2>
+            <table class="transaction-table">
+                <thead><tr><th>Descrição</th><th>Valor</th><th>Categoria</th><th>Data</th><th>Ação</th></tr></thead>
+                <tbody id="lista-transacoes"></tbody>
+            </table>
+        </section>
+    </main>
+    
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
 </body>
-<script src="script.js"></script>
 </html>
